@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
+import SqlTooltip from '@/components/SqlTooltip';
 import {
   Package,
   Clock,
@@ -428,9 +429,71 @@ export default function WarehouseOrdersPage() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Warehouse Orders</h1>
-            <p className="text-gray-600">Process incoming orders and assign carriers</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Warehouse Orders</h1>
+              <p className="text-gray-600">Process incoming orders and assign carriers</p>
+            </div>
+            <SqlTooltip
+              page="Warehouse Orders"
+              queries={[
+                {
+                  title: "Load Orders with FIFO",
+                  description: "Get orders with customer and product details using FIFO ordering",
+                  type: "SELECT",
+                  sql: `SELECT
+  o.*,
+  c.customername,
+  c.email,
+  od.quantity,
+  p.productname,
+  p.unitprice
+FROM "Order" o
+JOIN customers c ON o.customerid = c.customerid
+JOIN orderdetail od ON o.orderid = od.orderid
+JOIN product p ON od.productid = p.productid
+WHERE o.status IN ('pending', 'confirmed', 'processing')
+ORDER BY o.orderdate ASC; -- FIFO: First In, First Out`
+                },
+                {
+                  title: "Update Order Status",
+                  description: "Update order status with audit logging",
+                  type: "UPDATE",
+                  sql: `UPDATE "Order"
+SET status = $1
+WHERE orderid = $2;
+
+-- Insert status history
+INSERT INTO orderstatushistory (
+  historyid, orderid, oldstatus, newstatus,
+  changedat, changedbyuserid, note
+) VALUES (
+  gen_random_uuid(), $2, $3, $1,
+  NOW(), $4, $5
+);`
+                },
+                {
+                  title: "Create Shipment",
+                  description: "Create shipment record when assigning carrier",
+                  type: "INSERT",
+                  sql: `INSERT INTO shipments (
+  shipmentid,
+  carrierid,
+  orderid,
+  warehouseid,
+  shipmentdate,
+  trackingnumber,
+  status
+) VALUES (
+  gen_random_uuid(),
+  $1, $2, $3,
+  NOW(),
+  CONCAT('TRK', EXTRACT(EPOCH FROM NOW())),
+  'shipped'
+);`
+                }
+              ]}
+            />
           </div>
 
           <div className="flex gap-2">

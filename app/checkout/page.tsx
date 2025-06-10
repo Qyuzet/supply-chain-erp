@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
+import SqlTooltip from '@/components/SqlTooltip';
 import { 
   CreditCard, 
   Truck, 
@@ -390,9 +391,83 @@ export default function CheckoutPage() {
   return (
     <DashboardLayout>
       <div className="max-w-6xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
-          <p className="text-gray-600">Complete your purchase</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
+            <p className="text-gray-600">Complete your purchase</p>
+          </div>
+          <SqlTooltip
+            page="Checkout"
+            queries={[
+              {
+                title: "Create Order",
+                description: "Insert new order with customer and delivery info",
+                type: "INSERT",
+                sql: `INSERT INTO "Order" (
+  orderid,
+  customerid,
+  orderdate,
+  expecteddeliverydate,
+  status
+) VALUES (
+  $1, $2, $3, $4, 'pending'
+);`
+              },
+              {
+                title: "Create Order Details",
+                description: "Insert order items for each cart product",
+                type: "INSERT",
+                sql: `INSERT INTO orderdetail (
+  orderid,
+  productid,
+  quantity
+) VALUES ($1, $2, $3);`
+              },
+              {
+                title: "Update Inventory",
+                description: "Reduce stock quantity after order placement",
+                type: "UPDATE",
+                sql: `UPDATE inventory
+SET quantity = quantity - $1
+WHERE productid = $2
+  AND warehouseid = $3
+  AND quantity >= $1;`
+              },
+              {
+                title: "Create Payment Record",
+                description: "Auto-generate payment record for customer order",
+                type: "INSERT",
+                sql: `INSERT INTO paymentcustomer (
+  paymentid,
+  customerid,
+  orderid,
+  amount,
+  paymentmethod,
+  paymentdate,
+  status
+) VALUES (
+  $1, $2, $3, $4, 'credit_card',
+  NOW(), 'completed'
+);`
+              },
+              {
+                title: "Create Shipment",
+                description: "Generate shipment record with selected carrier",
+                type: "INSERT",
+                sql: `INSERT INTO shipments (
+  shipmentid,
+  carrierid,
+  orderid,
+  warehouseid,
+  shipmentdate,
+  trackingnumber,
+  status
+) VALUES (
+  $1, $2, $3, $4, NOW(), $5, 'pending'
+);`
+              }
+            ]}
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -32,56 +32,56 @@ const supplyChainFlow = [
   {
     step: 1,
     title: "Customer Order",
-    description: "Customer browses products and places order",
+    description: "Customer browses products and places order with automatic payment creation",
     icon: ShoppingCart,
     roles: ["customer"],
-    status: "Customer shops and checks out",
-    nextStep: "Order goes to warehouse for processing"
+    status: "Customer shops, selects carrier, and completes checkout",
+    nextStep: "Order processed with FIFO priority and goes to warehouse"
   },
   {
     step: 2,
     title: "Warehouse Processing",
-    description: "Warehouse checks inventory and confirms order",
+    description: "Warehouse processes orders using FIFO methodology and checks inventory",
     icon: Package,
     roles: ["warehouse"],
-    status: "Warehouse confirms order availability",
-    nextStep: "If stock low, create Purchase Order to Supplier"
+    status: "Warehouse confirms order and updates status with audit logging",
+    nextStep: "If stock available: prepare shipment. If low stock: create Purchase Order"
   },
   {
     step: 3,
     title: "Purchase Order",
-    description: "Warehouse creates PO when inventory is low",
+    description: "Warehouse creates PO with automated status tracking when inventory is low",
     icon: Building,
     roles: ["warehouse", "supplier"],
-    status: "Supplier receives and approves Purchase Order",
-    nextStep: "Supplier requests production from Factory"
+    status: "Supplier receives PO with FIFO processing and status history",
+    nextStep: "Supplier requests production from Factory with automated workflow"
   },
   {
     step: 4,
     title: "Production",
-    description: "Factory manufactures products from approved PO",
+    description: "Factory manufactures products with comprehensive status logging",
     icon: Factory,
     roles: ["factory"],
-    status: "Factory produces and updates inventory",
-    nextStep: "Warehouse can now fulfill customer orders"
+    status: "Factory produces goods and updates inventory with movement tracking",
+    nextStep: "Warehouse receives stock and can fulfill pending orders"
   },
   {
     step: 5,
     title: "Shipment",
-    description: "Warehouse assigns carrier for delivery",
+    description: "Warehouse creates shipment and assigns to carrier with tracking",
     icon: Truck,
     roles: ["warehouse", "carrier"],
-    status: "Carrier picks up and delivers to customer",
-    nextStep: "Customer receives order"
+    status: "Carrier picks up (shipped → in_transit → delivered) with status updates",
+    nextStep: "Real-time tracking until customer delivery"
   },
   {
     step: 6,
     title: "Delivery Complete",
-    description: "Customer receives order and can leave feedback",
+    description: "Customer receives order with complete audit trail and return options",
     icon: CheckCircle,
     roles: ["customer", "carrier"],
-    status: "Order completed successfully",
-    nextStep: "Process complete - customer can return if needed"
+    status: "Order completed with payment confirmation and performance tracking",
+    nextStep: "Customer can initiate returns if needed with status workflow"
   }
 ];
 
@@ -227,50 +227,50 @@ export default function FlowTooltip({ currentStep, userRole }: FlowTooltipProps)
               <div className="grid grid-cols-2 gap-2 text-sm">
                 {userRole === 'customer' && (
                   <>
-                    <p>• Browse products in /shop</p>
-                    <p>• Track orders in /orders</p>
-                    <p>• Manage returns in /returns</p>
-                    <p>• View payments in /payments</p>
+                    <p>• Browse products with real-time inventory in /shop</p>
+                    <p>• Track FIFO-processed orders in /orders</p>
+                    <p>• Manage returns with status workflow in /returns</p>
+                    <p>• View auto-generated payments in /payments</p>
                   </>
                 )}
                 {userRole === 'warehouse' && (
                   <>
-                    <p>• Process orders in /warehouse-orders</p>
-                    <p>• Manage inventory in /inventory</p>
-                    <p>• Create purchase orders when stock low</p>
-                    <p>• Assign carriers for shipment</p>
+                    <p>• Process FIFO orders in /warehouse-orders</p>
+                    <p>• Manage inventory with movement logging in /inventory</p>
+                    <p>• Create purchase orders with status tracking</p>
+                    <p>• Assign carriers and create shipments</p>
                   </>
                 )}
                 {userRole === 'supplier' && (
                   <>
-                    <p>• Manage products in /products</p>
-                    <p>• Review purchase orders in /purchase-orders</p>
-                    <p>• Request production in /production</p>
-                    <p>• Track payments in /payments</p>
+                    <p>• Manage products with auto inventory init in /products</p>
+                    <p>• Review FIFO purchase orders in /purchase-orders</p>
+                    <p>• Request production with status logging in /production</p>
+                    <p>• Track supplier payments in /payments</p>
                   </>
                 )}
                 {userRole === 'factory' && (
                   <>
-                    <p>• Manage production in /factory-production</p>
-                    <p>• Monitor manufacturing in /manufacturing</p>
-                    <p>• Quality control in /quality-control</p>
-                    <p>• Update inventory when production complete</p>
+                    <p>• Manage FIFO production in /factory-production</p>
+                    <p>• Monitor manufacturing with status updates</p>
+                    <p>• Quality control with automated tracking</p>
+                    <p>• Update inventory with movement logging</p>
                   </>
                 )}
                 {userRole === 'carrier' && (
                   <>
-                    <p>• Manage shipments in /carrier</p>
-                    <p>• Update delivery status</p>
-                    <p>• Track delivery performance</p>
-                    <p>• Coordinate with warehouses</p>
+                    <p>• Manage shipments with 3-stage flow in /carrier</p>
+                    <p>• Update status: shipped → in_transit → delivered</p>
+                    <p>• Track delivery performance metrics</p>
+                    <p>• Coordinate with real-time status updates</p>
                   </>
                 )}
                 {userRole === 'admin' && (
                   <>
-                    <p>• Manage all users in /admin</p>
-                    <p>• Oversee all operations</p>
-                    <p>• View system reports</p>
-                    <p>• Monitor performance metrics</p>
+                    <p>• Manage all users and RLS policies in /admin</p>
+                    <p>• Oversee FIFO operations across all modules</p>
+                    <p>• View comprehensive system reports</p>
+                    <p>• Monitor performance with audit trails</p>
                   </>
                 )}
               </div>

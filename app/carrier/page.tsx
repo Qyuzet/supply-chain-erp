@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
+import SqlTooltip from '@/components/SqlTooltip';
 import { 
   Truck, 
   Package, 
@@ -230,9 +231,58 @@ export default function CarrierPage() {
         </div>
 
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Carrier Dashboard</h1>
-          <p className="text-gray-600">Manage pickups, deliveries, and shipment tracking</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Carrier Dashboard</h1>
+            <p className="text-gray-600">Manage pickups, deliveries, and shipment tracking</p>
+          </div>
+          <SqlTooltip
+            page="Carrier"
+            queries={[
+              {
+                title: "Load Shipments with FIFO",
+                description: "Get shipments ordered by shipment date (First In, First Out)",
+                type: "SELECT",
+                sql: `SELECT
+  s.*,
+  o.orderdate,
+  o.status as order_status,
+  c.customername,
+  w.warehousename,
+  w.location
+FROM shipments s
+JOIN "Order" o ON s.orderid = o.orderid
+JOIN customers c ON o.customerid = c.customerid
+JOIN warehouses w ON s.warehouseid = w.warehouseid
+WHERE s.carrierid = $1
+ORDER BY s.shipmentdate ASC; -- FIFO ordering`
+              },
+              {
+                title: "Update Shipment Status",
+                description: "Update shipment status in 3-stage flow: shipped → in_transit → delivered",
+                type: "UPDATE",
+                sql: `UPDATE shipments
+SET status = $1
+WHERE shipmentid = $2
+  AND carrierid = $3;
+
+-- Status flow:
+-- 'shipped' → 'in_transit' → 'delivered'`
+              },
+              {
+                title: "Update Order Status",
+                description: "Sync order status when shipment is delivered",
+                type: "UPDATE",
+                sql: `UPDATE "Order"
+SET status = 'delivered'
+WHERE orderid = (
+  SELECT orderid
+  FROM shipments
+  WHERE shipmentid = $1
+) AND status != 'delivered';`
+              }
+            ]}
+          />
         </div>
 
         {/* Stats Cards */}

@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
+import SqlTooltip from '@/components/SqlTooltip';
 import {
   ShoppingCart,
   Plus,
@@ -237,9 +238,51 @@ export default function ShopPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Shop</h1>
-            <p className="text-gray-600">Browse and purchase products</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Shop</h1>
+              <p className="text-gray-600">Browse and purchase products</p>
+            </div>
+            <SqlTooltip
+              page="Shop"
+              queries={[
+                {
+                  title: "Load Products with Inventory",
+                  description: "Fetch all products with supplier info and inventory levels",
+                  type: "SELECT",
+                  sql: `SELECT
+  p.productid,
+  p.productname,
+  p.description,
+  p.unitprice,
+  s.suppliername,
+  i.quantity,
+  w.warehousename,
+  w.location
+FROM product p
+LEFT JOIN supplier s ON p.supplierid = s.supplierid
+LEFT JOIN inventory i ON p.productid = i.productid
+LEFT JOIN warehouses w ON i.warehouseid = w.warehouseid
+ORDER BY p.productname;`
+                },
+                {
+                  title: "Save Cart to LocalStorage",
+                  description: "Store cart data in browser for checkout process",
+                  type: "INSERT",
+                  sql: `-- JavaScript LocalStorage operation
+localStorage.setItem('cart', JSON.stringify(cartData));
+
+-- Cart structure:
+{
+  productid: string,
+  productname: string,
+  unitprice: number,
+  quantity: number,
+  maxStock: number
+}`
+                }
+              ]}
+            />
           </div>
           
           {/* Cart Summary */}
