@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
+import SqlTooltip from '@/components/SqlTooltip';
 import { 
   Truck, 
   Plus, 
@@ -235,9 +236,71 @@ export default function CarriersPage() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Shipping Carriers</h1>
-            <p className="text-gray-600">Manage carriers for order delivery</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Shipping Carriers</h1>
+              <p className="text-gray-600">Manage carriers for order delivery</p>
+            </div>
+            <SqlTooltip
+              page="Carriers Management"
+              queries={[
+                {
+                  title: "Load Carriers with Shipment Stats",
+                  description: "Get carriers with delivery performance metrics",
+                  type: "SELECT",
+                  sql: `SELECT
+  sc.*,
+  COUNT(s.shipmentid) as total_shipments,
+  COUNT(CASE WHEN s.status = 'delivered' THEN 1 END) as completed_deliveries,
+  COUNT(CASE WHEN s.status = 'in_transit' THEN 1 END) as in_transit_shipments
+FROM shippingcarrier sc
+LEFT JOIN shipments s ON sc.carrierid = s.carrierid
+GROUP BY sc.carrierid
+ORDER BY sc.carriername ASC;`
+                },
+                {
+                  title: "Create Carrier",
+                  description: "Add new shipping carrier to system",
+                  type: "INSERT",
+                  sql: `INSERT INTO shippingcarrier (
+  carrierid,
+  carriername,
+  contactinfo,
+  serviceareas
+) VALUES (
+  gen_random_uuid(),
+  $1, $2, $3
+);`
+                },
+                {
+                  title: "Update Carrier",
+                  description: "Update carrier information and service areas",
+                  type: "UPDATE",
+                  sql: `UPDATE shippingcarrier
+SET
+  carriername = $1,
+  contactinfo = $2,
+  serviceareas = $3
+WHERE carrierid = $4;`
+                },
+                {
+                  title: "Get Carrier Performance",
+                  description: "Analyze carrier delivery performance",
+                  type: "SELECT",
+                  sql: `SELECT
+  sc.carriername,
+  COUNT(s.shipmentid) as total_shipments,
+  AVG(EXTRACT(DAYS FROM (s.shipmentdate - o.orderdate))) as avg_delivery_days,
+  COUNT(CASE WHEN s.status = 'delivered' THEN 1 END) * 100.0 / COUNT(s.shipmentid) as delivery_rate
+FROM shippingcarrier sc
+LEFT JOIN shipments s ON sc.carrierid = s.carrierid
+LEFT JOIN "Order" o ON s.orderid = o.orderid
+WHERE s.shipmentdate IS NOT NULL
+GROUP BY sc.carrierid, sc.carriername
+ORDER BY delivery_rate DESC;`
+                }
+              ]}
+            />
           </div>
           
           <Dialog open={isCreating} onOpenChange={setIsCreating}>

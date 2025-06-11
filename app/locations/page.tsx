@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
+import SqlTooltip from '@/components/SqlTooltip';
 import { MapPin, Plus, Edit, Building, Package } from 'lucide-react';
 import type { User } from '@/lib/auth';
 
@@ -270,9 +271,69 @@ export default function LocationsPage() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Warehouse Locations</h1>
-            <p className="text-gray-600">Manage warehouse locations and inventory</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Warehouse Locations</h1>
+              <p className="text-gray-600">Manage warehouse locations and inventory</p>
+            </div>
+            <SqlTooltip
+              page="Warehouse Locations"
+              queries={[
+                {
+                  title: "Load Warehouses with Inventory Summary",
+                  description: "Get warehouses with total inventory counts",
+                  type: "SELECT",
+                  sql: `SELECT
+  w.*,
+  COUNT(i.productid) as total_products,
+  SUM(i.quantity) as total_inventory,
+  COUNT(s.shipmentid) as total_shipments
+FROM warehouses w
+LEFT JOIN inventory i ON w.warehouseid = i.warehouseid
+LEFT JOIN shipments s ON w.warehouseid = s.warehouseid
+GROUP BY w.warehouseid
+ORDER BY w.warehousename ASC;`
+                },
+                {
+                  title: "Create Warehouse",
+                  description: "Add new warehouse location",
+                  type: "INSERT",
+                  sql: `INSERT INTO warehouses (
+  warehouseid,
+  warehousename,
+  location
+) VALUES (
+  gen_random_uuid(),
+  $1, $2
+);`
+                },
+                {
+                  title: "Update Warehouse",
+                  description: "Update warehouse information",
+                  type: "UPDATE",
+                  sql: `UPDATE warehouses
+SET
+  warehousename = $1,
+  location = $2
+WHERE warehouseid = $3;`
+                },
+                {
+                  title: "Get Warehouse Inventory",
+                  description: "Get detailed inventory for specific warehouse",
+                  type: "SELECT",
+                  sql: `SELECT
+  i.*,
+  p.productname,
+  p.unitprice,
+  s.suppliername
+FROM inventory i
+JOIN product p ON i.productid = p.productid
+LEFT JOIN supplier s ON p.supplierid = s.supplierid
+WHERE i.warehouseid = $1
+ORDER BY p.productname ASC;`
+                }
+              ]}
+            />
           </div>
           <Dialog open={isCreating} onOpenChange={setIsCreating}>
             <DialogTrigger asChild>

@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
+import SqlTooltip from '@/components/SqlTooltip';
 import { 
   TrendingUp, 
   Plus, 
@@ -234,9 +235,69 @@ export default function SupplierPerformancePage() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Supplier Performance</h1>
-            <p className="text-gray-600">Evaluate and track supplier performance metrics</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Supplier Performance</h1>
+              <p className="text-gray-600">Evaluate and track supplier performance metrics</p>
+            </div>
+            <SqlTooltip
+              page="Supplier Performance"
+              queries={[
+                {
+                  title: "Load Supplier Performance Metrics",
+                  description: "Get supplier performance data with ratings and delivery metrics",
+                  type: "SELECT",
+                  sql: `SELECT
+  sp.*,
+  s.suppliername,
+  s.contactinfo,
+  COUNT(po.purchaseorderid) as total_orders,
+  AVG(sp.deliveryrating) as avg_delivery_rating,
+  AVG(sp.qualityrating) as avg_quality_rating
+FROM supplierperformance sp
+JOIN supplier s ON sp.supplierid = s.supplierid
+LEFT JOIN purchaseorder po ON sp.supplierid = po.supplierid
+GROUP BY sp.performanceid, s.supplierid
+ORDER BY sp.evaluationdate DESC;`
+                },
+                {
+                  title: "Create Performance Evaluation",
+                  description: "Record new supplier performance evaluation",
+                  type: "INSERT",
+                  sql: `INSERT INTO supplierperformance (
+  performanceid,
+  supplierid,
+  evaluationdate,
+  deliveryrating,
+  qualityrating,
+  communicationrating,
+  overallrating,
+  comments
+) VALUES (
+  gen_random_uuid(),
+  $1, NOW(), $2, $3, $4, $5, $6
+);`
+                },
+                {
+                  title: "Calculate Supplier Metrics",
+                  description: "Aggregate supplier performance over time",
+                  type: "SELECT",
+                  sql: `SELECT
+  s.supplierid,
+  s.suppliername,
+  COUNT(po.purchaseorderid) as total_purchase_orders,
+  AVG(sp.deliveryrating) as avg_delivery_rating,
+  AVG(sp.qualityrating) as avg_quality_rating,
+  AVG(sp.overallrating) as avg_overall_rating,
+  COUNT(sp.performanceid) as total_evaluations
+FROM supplier s
+LEFT JOIN purchaseorder po ON s.supplierid = po.supplierid
+LEFT JOIN supplierperformance sp ON s.supplierid = sp.supplierid
+GROUP BY s.supplierid, s.suppliername
+ORDER BY avg_overall_rating DESC NULLS LAST;`
+                }
+              ]}
+            />
           </div>
           
           <Dialog open={isCreating} onOpenChange={setIsCreating}>
