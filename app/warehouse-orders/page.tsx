@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
 import SqlTooltip from '@/components/SqlTooltip';
+import JourneyCard from '@/components/JourneyCard';
 import {
   Package,
   Clock,
@@ -410,6 +411,34 @@ export default function WarehouseOrdersPage() {
           relatedTables={['inventory', 'product', 'shipments', 'shippingcarrier']}
           operations={['Process FIFO Orders', 'Check Inventory', 'Assign Carriers', 'Update Status']}
           description="FIFO order processing: pending → ready to pickup → shipped → delivered. Automatic inventory checks and carrier assignment for efficient fulfillment."
+        />
+
+        <JourneyCard
+          title="Warehouse Processing"
+          description="FIFO order fulfillment workflow from pending to carrier pickup."
+          currentStep={0}
+          steps={[
+            {
+              step: "Pending Orders",
+              description: "Review new orders waiting for processing"
+            },
+            {
+              step: "Check Inventory",
+              description: "Verify stock availability for all order items"
+            },
+            {
+              step: "Assign Carrier",
+              description: "Select shipping carrier based on destination"
+            },
+            {
+              step: "Ready for Pickup",
+              description: "Order prepared and waiting for carrier collection"
+            },
+            {
+              step: "Shipped",
+              description: "Carrier collected and order is in transit"
+            }
+          ]}
         />
 
         {/* Warehouse Flow Guidance */}

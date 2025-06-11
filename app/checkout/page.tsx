@@ -14,6 +14,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 import SqlTooltip from '@/components/SqlTooltip';
+import JourneyCard from '@/components/JourneyCard';
 import {
   CreditCard,
   Truck,
@@ -391,6 +392,29 @@ export default function CheckoutPage() {
   return (
     <DashboardLayout>
       <div className="max-w-6xl mx-auto space-y-6">
+        <JourneyCard
+          title="Checkout Process"
+          description="Complete your order with delivery and payment information."
+          currentStep={2}
+          steps={[
+            {
+              step: "Cart Review",
+              description: "Items selected and quantities confirmed"
+            },
+            {
+              step: "Delivery Info",
+              description: "Enter shipping address and select carrier"
+            },
+            {
+              step: "Payment",
+              description: "Choose payment method and complete purchase"
+            },
+            {
+              step: "Order Placed",
+              description: "Receive confirmation and tracking information"
+            }
+          ]}
+        />
 
         <div className="flex items-center justify-between">
           <div>

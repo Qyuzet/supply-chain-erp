@@ -45,6 +45,7 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
 import SqlTooltip from '@/components/SqlTooltip';
+import JourneyCard from '@/components/JourneyCard';
 import type { User } from '@/lib/auth';
 
 interface OrderWithDetails {
@@ -422,20 +423,33 @@ export default function OrdersPage() {
           description="Track your orders from placement to delivery. Orders displayed newest first for easy tracking. Status flow: pending → processing → shipped → delivered with real-time updates."
         />
 
-        {/* Customer Order Flow Guidance */}
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <h3 className="font-semibold text-green-900 mb-2">Your Order Journey</h3>
-          <div className="text-sm text-green-800 space-y-1">
-            <p><strong>1. Shop:</strong> Browse products and add to cart</p>
-            <p><strong>2. Checkout:</strong> Complete payment and place order</p>
-            <p><strong>3. Processing:</strong> Warehouse confirms and prepares your order</p>
-            <p><strong>4. Shipping:</strong> Carrier picks up and delivers your order</p>
-            <p><strong>5. Delivered:</strong> Receive your products and leave feedback</p>
-            <p className="mt-2 font-medium text-green-900">
-              Track your orders below and manage returns if needed
-            </p>
-          </div>
-        </div>
+        <JourneyCard
+          title="Order Journey"
+          description="Track your order from placement to delivery with real-time status updates."
+          currentStep={0}
+          steps={[
+            {
+              step: "Shop & Cart",
+              description: "Browse products and add items to your cart"
+            },
+            {
+              step: "Checkout",
+              description: "Complete payment and place your order"
+            },
+            {
+              step: "Processing",
+              description: "Warehouse confirms and prepares your order"
+            },
+            {
+              step: "Shipping",
+              description: "Carrier picks up and delivers your order"
+            },
+            {
+              step: "Delivered",
+              description: "Receive your products and track completion"
+            }
+          ]}
+        />
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">

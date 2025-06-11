@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
 import SqlTooltip from '@/components/SqlTooltip';
+import JourneyCard from '@/components/JourneyCard';
 import { 
   Truck, 
   Package, 
@@ -214,6 +215,26 @@ export default function CarrierPage() {
           relatedTables={['Order', 'customers', 'warehouses', 'shippingcarrier']}
           operations={['Track Shipments', 'Update Status', 'Manage Deliveries']}
           description="Carrier shipment management and delivery tracking"
+        />
+
+        <JourneyCard
+          title="Delivery Workflow"
+          description="3-stage carrier delivery process from pickup to completion."
+          currentStep={0}
+          steps={[
+            {
+              step: "Ready for Pickup",
+              description: "Orders prepared by warehouse, waiting for collection"
+            },
+            {
+              step: "In Transit",
+              description: "Orders picked up and being delivered to customers"
+            },
+            {
+              step: "Delivered",
+              description: "Orders successfully delivered to customers"
+            }
+          ]}
         />
 
 

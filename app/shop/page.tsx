@@ -14,6 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 import SqlTooltip from '@/components/SqlTooltip';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
+import JourneyCard from '@/components/JourneyCard';
 import {
   ShoppingCart,
   Plus,
@@ -242,6 +243,34 @@ export default function ShopPage() {
           relatedTables={['supplier', 'warehouses']}
           operations={['Browse Products', 'Add to Cart', 'Check Stock Levels']}
           description="Product catalog with real-time inventory from all warehouses. Add items to cart and proceed to checkout for order placement."
+        />
+
+        <JourneyCard
+          title="Shopping Journey"
+          description="Browse products, add to cart, and complete your purchase."
+          currentStep={0}
+          steps={[
+            {
+              step: "Browse Products",
+              description: "View products with real-time stock levels and pricing"
+            },
+            {
+              step: "Add to Cart",
+              description: "Select items and adjust quantities in your cart"
+            },
+            {
+              step: "Review Cart",
+              description: "Check items, quantities, and total before checkout"
+            },
+            {
+              step: "Checkout",
+              description: "Complete payment and delivery information"
+            },
+            {
+              step: "Order Placed",
+              description: "Receive confirmation and track your order"
+            }
+          ]}
         />
 
         {/* Header */}
