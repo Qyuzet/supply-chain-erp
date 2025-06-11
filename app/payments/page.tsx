@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
 import SqlTooltip from '@/components/SqlTooltip';
+import PageExplanation from '@/components/PageExplanation';
 import { 
   DollarSign, 
   Plus, 
@@ -346,6 +347,62 @@ export default function PaymentsPage() {
           relatedTables={['Order', 'purchaseorder', 'customers', 'supplier']}
           operations={['Record Payments', 'Track Cash Flow', 'Payment History']}
           description="Payment management system for customer and supplier transactions"
+        />
+
+        <PageExplanation
+          title="Payment Management"
+          description="Track your payment history and manage payment methods"
+          steps={[
+            {
+              title: "View Payment History",
+              description: "See all your payments organized by customer and supplier transactions",
+              action: "Browse the Customer Payments and Supplier Payments tabs"
+            },
+            {
+              title: "Check Payment Status",
+              description: "Monitor payment statuses: pending, completed, failed, refunded",
+              action: "Review status column in payment tables"
+            },
+            {
+              title: "Track Order Payments",
+              description: "See which payments correspond to specific orders",
+              action: "Check Order ID column to match payments to orders"
+            },
+            {
+              title: "Monitor Payment Methods",
+              description: "View which payment methods were used for transactions",
+              action: "Check Payment Method column"
+            },
+            {
+              title: "Review Payment Amounts",
+              description: "Track payment amounts and dates for financial records",
+              action: "View Amount and Payment Date columns"
+            }
+          ]}
+          tips={[
+            "Customer payments are automatically created when you place orders",
+            "Payment status updates in real-time as transactions process",
+            "Failed payments may require retry or alternative payment method",
+            "Refunded payments appear when returns are processed",
+            "Keep track of payment methods for future reference"
+          ]}
+          relatedPages={[
+            {
+              name: "Orders",
+              path: "/orders",
+              description: "View orders associated with payments"
+            },
+            {
+              name: "Returns",
+              path: "/returns",
+              description: "Track refunds for returned items"
+            },
+            {
+              name: "Checkout",
+              path: "/checkout",
+              description: "Make new purchases and payments"
+            }
+          ]}
         />
 
         {/* Header */}
