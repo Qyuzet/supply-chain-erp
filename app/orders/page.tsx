@@ -419,7 +419,7 @@ export default function OrdersPage() {
           primaryTables={['Order', 'orderdetail']}
           relatedTables={['customers', 'product', 'inventory', 'shipments']}
           operations={['Track Order Status', 'View Order Details', 'Monitor Shipments']}
-          description="Track your orders from placement to delivery. Orders flow: pending → processing → shipped → delivered with real-time status updates and FIFO processing."
+          description="Track your orders from placement to delivery. Orders displayed newest first for easy tracking. Status flow: pending → processing → shipped → delivered with real-time updates."
         />
 
         {/* Customer Order Flow Guidance */}
@@ -449,8 +449,8 @@ export default function OrdersPage() {
             page="Orders"
             queries={[
               {
-                title: "Load Customer Orders with FIFO",
-                description: "Get customer orders with product details using FIFO ordering",
+                title: "Load Customer Orders",
+                description: "Get customer orders with product details, newest orders first",
                 type: "SELECT",
                 sql: `SELECT
   o.*,
@@ -465,7 +465,7 @@ JOIN orderdetail od ON o.orderid = od.orderid
 JOIN product p ON od.productid = p.productid
 LEFT JOIN shipments s ON o.orderid = s.orderid
 WHERE c.userid = $1
-ORDER BY o.orderdate ASC; -- FIFO: First In, First Out`
+ORDER BY o.orderdate DESC; -- Newest orders first for customer view`
               },
               {
                 title: "Track Order Status",

@@ -54,7 +54,7 @@ export const orderOperations = {
       .from('Order')
       .select('*')
       .eq('customerid', customerId)
-      .order('orderdate', { ascending: true }); // FIFO: First In, First Out
+      .order('orderdate', { ascending: false }); // Newest orders first for customer view
 
     if (orderError) {
       console.error('Database error in getCustomerOrders:', orderError);
