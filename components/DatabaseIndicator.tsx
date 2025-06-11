@@ -22,17 +22,17 @@ export default function DatabaseIndicator({
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <Card className="mb-4 bg-gradient-to-r from-slate-50 to-blue-50 border-slate-200 shadow-sm">
+    <Card className="mb-4 bg-gradient-to-r from-muted/50 to-muted/30 border-border shadow-sm">
       <CardContent className="p-3">
         {/* Compact Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Database className="h-4 w-4 text-slate-600" />
-            <span className="text-sm font-medium text-slate-700">Database Integration</span>
-            <Badge variant="outline" className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 border-blue-200">
+            <Database className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-foreground">Database Integration</span>
+            <Badge variant="outline" className="text-xs px-2 py-0.5 bg-primary/10 text-primary border-primary/20">
               {primaryTables.join(', ')}
             </Badge>
-            <Badge variant="outline" className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 border-slate-200">
+            <Badge variant="outline" className="text-xs px-2 py-0.5 bg-muted text-muted-foreground border-border">
               PostgreSQL
             </Badge>
           </div>
@@ -41,7 +41,7 @@ export default function DatabaseIndicator({
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="h-6 w-6 p-0 text-slate-500 hover:text-slate-700"
+            className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
           >
             {isExpanded ? (
               <ChevronUp className="h-3 w-3" />
@@ -53,22 +53,22 @@ export default function DatabaseIndicator({
 
         {/* Expandable Details */}
         {isExpanded && (
-          <div className="mt-3 pt-3 border-t border-slate-200">
+          <div className="mt-3 pt-3 border-t border-border">
             <div className="flex items-start space-x-2 mb-3">
-              <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-slate-600 leading-relaxed">{description}</p>
+              <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* Primary Tables */}
               <div>
                 <div className="flex items-center space-x-1 mb-1.5">
-                  <Table className="h-3 w-3 text-blue-600" />
-                  <span className="text-xs font-medium text-slate-700">Primary:</span>
+                  <Table className="h-3 w-3 text-primary" />
+                  <span className="text-xs font-medium text-foreground">Primary:</span>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {primaryTables.map((table) => (
-                    <Badge key={table} className="text-xs px-2 py-0.5 bg-blue-600 text-white">
+                    <Badge key={table} className="text-xs px-2 py-0.5 bg-primary text-primary-foreground">
                       {table}
                     </Badge>
                   ))}
@@ -79,12 +79,12 @@ export default function DatabaseIndicator({
               {relatedTables.length > 0 && (
                 <div>
                   <div className="flex items-center space-x-1 mb-1.5">
-                    <ArrowRight className="h-3 w-3 text-slate-600" />
-                    <span className="text-xs font-medium text-slate-700">Related:</span>
+                    <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-xs font-medium text-foreground">Related:</span>
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {relatedTables.map((table) => (
-                      <Badge key={table} variant="outline" className="text-xs px-2 py-0.5 border-slate-300 text-slate-600">
+                      <Badge key={table} variant="outline" className="text-xs px-2 py-0.5 border-border text-muted-foreground">
                         {table}
                       </Badge>
                     ))}
@@ -94,9 +94,9 @@ export default function DatabaseIndicator({
             </div>
 
             {/* Operations */}
-            <div className="mt-3 pt-2 border-t border-slate-100">
-              <span className="text-xs font-medium text-slate-700">Operations: </span>
-              <span className="text-xs text-slate-600">
+            <div className="mt-3 pt-2 border-t border-border/50">
+              <span className="text-xs font-medium text-foreground">Operations: </span>
+              <span className="text-xs text-muted-foreground">
                 {operations.join(' • ')}
               </span>
             </div>

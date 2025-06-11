@@ -86,14 +86,14 @@ export default function Sidebar({ userRole }: SidebarProps) {
 
   return (
     <div className={cn(
-      "flex flex-col bg-white border-r border-gray-200 transition-all duration-300",
+      "flex flex-col bg-card border-r border-border transition-all duration-300",
       collapsed ? "w-16" : "w-64"
     )}>
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+      <div className="flex items-center justify-between p-4 border-b border-border">
         {!collapsed && (
           <div className="flex items-center space-x-2">
-            <Package className="h-8 w-8 text-blue-600" />
-            <span className="text-xl font-bold text-gray-900">SupplyChain</span>
+            <Package className="h-8 w-8 text-primary" />
+            <span className="text-xl font-semibold text-foreground">SupplyChain</span>
           </div>
         )}
         <Button
@@ -117,15 +117,15 @@ export default function Sidebar({ userRole }: SidebarProps) {
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors",
-                  isActive 
-                    ? "bg-blue-100 text-blue-900" 
-                    : "text-gray-700 hover:bg-gray-100",
+                  "flex items-center space-x-3 px-3 py-2 rounded-md transition-colors text-sm font-medium",
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                   collapsed && "justify-center"
                 )}
               >
-                <Icon className="h-5 w-5 flex-shrink-0" />
-                {!collapsed && <span className="font-medium">{item.name}</span>}
+                <Icon className="h-4 w-4 flex-shrink-0" />
+                {!collapsed && <span>{item.name}</span>}
               </Link>
             );
           })}

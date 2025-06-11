@@ -84,23 +84,25 @@ export default function Header({ user: propUser }: HeaderProps) {
 
   const getRoleBadgeColor = (role: string) => {
     const colors = {
-      admin: 'bg-red-100 text-red-800',
-      warehouse: 'bg-blue-100 text-blue-800',
-      supplier: 'bg-green-100 text-green-800',
-      carrier: 'bg-yellow-100 text-yellow-800',
-      customer: 'bg-purple-100 text-purple-800',
+      admin: 'bg-destructive/10 text-destructive',
+      warehouse: 'bg-primary/10 text-primary',
+      supplier: 'bg-emerald-500/10 text-emerald-700',
+      carrier: 'bg-amber-500/10 text-amber-700',
+      customer: 'bg-violet-500/10 text-violet-700',
+      factory: 'bg-orange-500/10 text-orange-700',
     };
-    return colors[role as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+    return colors[role as keyof typeof colors] || 'bg-muted text-muted-foreground';
   };
 
   return (
-    <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
+    <header className="flex items-center justify-between px-6 py-4 bg-card border-b border-border">
       <div className="flex items-center space-x-4">
-        <h1 className="text-2xl font-semibold text-gray-900">
+        <h1 className="text-xl font-semibold text-foreground">
           {user?.role === 'customer' && 'Customer Portal'}
           {user?.role === 'supplier' && 'Supplier Dashboard'}
           {user?.role === 'warehouse' && 'Warehouse Management'}
           {user?.role === 'carrier' && 'Carrier Operations'}
+          {user?.role === 'factory' && 'Factory Operations'}
           {user?.role === 'admin' && 'Admin Console'}
         </h1>
       </div>
@@ -109,8 +111,8 @@ export default function Header({ user: propUser }: HeaderProps) {
         {user && <RoleSwitcher user={user} onRoleChange={() => window.location.reload()} />}
 
         <Button variant="ghost" size="sm" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
+          <Bell className="h-4 w-4" />
+          <span className="absolute -top-1 -right-1 h-4 w-4 bg-destructive rounded-full text-xs text-destructive-foreground flex items-center justify-center">
             3
           </span>
         </Button>
