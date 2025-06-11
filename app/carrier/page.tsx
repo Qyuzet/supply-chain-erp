@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
 import SqlTooltip from '@/components/SqlTooltip';
+import PageExplanation from '@/components/PageExplanation';
 import { 
   Truck, 
   Package, 
@@ -214,6 +215,57 @@ export default function CarrierPage() {
           relatedTables={['Order', 'customers', 'warehouses', 'shippingcarrier']}
           operations={['Track Shipments', 'Update Status', 'Manage Deliveries']}
           description="Carrier shipment management and delivery tracking"
+        />
+
+        <PageExplanation
+          title="Carrier Delivery Management"
+          description="Manage shipments and deliveries through the 3-stage carrier workflow"
+          steps={[
+            {
+              title: "Pick Up Ready Orders",
+              description: "Collect orders marked as 'ready to pickup' from warehouses",
+              action: "View 'Ready for Pickup' section"
+            },
+            {
+              title: "Mark as In Transit",
+              description: "Update shipment status to 'in_transit' once picked up from warehouse",
+              action: "Click 'Mark In Transit' button"
+            },
+            {
+              title: "Track Deliveries",
+              description: "Monitor shipments currently being delivered to customers",
+              action: "View 'In Transit' section"
+            },
+            {
+              title: "Complete Delivery",
+              description: "Mark shipments as 'delivered' once successfully delivered to customer",
+              action: "Click 'Mark Delivered' button"
+            },
+            {
+              title: "Review Performance",
+              description: "Track your delivery statistics and completion rates",
+              action: "View dashboard metrics at top"
+            }
+          ]}
+          tips={[
+            "Shipments flow: ready to pickup → in transit → delivered",
+            "Always confirm pickup with warehouse before marking in transit",
+            "Update tracking information promptly for customer visibility",
+            "Delivered orders complete the supply chain workflow",
+            "Performance metrics help track your delivery efficiency"
+          ]}
+          relatedPages={[
+            {
+              name: "Warehouse Orders",
+              path: "/warehouse-orders",
+              description: "See orders being prepared for pickup"
+            },
+            {
+              name: "Carriers Management",
+              path: "/carriers",
+              description: "Manage carrier information and service areas"
+            }
+          ]}
         />
 
         {/* Carrier Flow Guidance */}

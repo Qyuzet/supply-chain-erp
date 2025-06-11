@@ -45,6 +45,7 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
 import SqlTooltip from '@/components/SqlTooltip';
+import PageExplanation from '@/components/PageExplanation';
 import type { User } from '@/lib/auth';
 
 interface OrderWithDetails {
@@ -420,6 +421,56 @@ export default function OrdersPage() {
           relatedTables={['customers', 'product', 'inventory']}
           operations={['Create Orders', 'Track Orders', 'Update Inventory']}
           description="Customer order management with real-time inventory updates"
+        />
+
+        <PageExplanation
+          title="Orders Management"
+          description="Track and manage your orders from placement to delivery"
+          steps={[
+            {
+              title: "View Your Orders",
+              description: "See all your orders listed with current status and tracking information",
+              action: "Browse the orders table below"
+            },
+            {
+              title: "Track Order Status",
+              description: "Monitor order progress: pending → processing → shipped → delivered",
+              action: "Check the status column"
+            },
+            {
+              title: "View Order Details",
+              description: "Click the eye icon to see detailed information about products and shipping",
+              action: "Click 👁️ icon in Actions column"
+            },
+            {
+              title: "Create New Order",
+              description: "Place new orders by visiting the Shop page and adding items to cart",
+              action: "Go to Shop → Add to Cart → Checkout"
+            }
+          ]}
+          tips={[
+            "Orders are processed in FIFO (First In, First Out) order for fair processing",
+            "You'll receive automatic updates when your order status changes",
+            "Tracking numbers are provided once your order ships",
+            "Contact support if an order is stuck in 'pending' status for more than 24 hours"
+          ]}
+          relatedPages={[
+            {
+              name: "Shop",
+              path: "/shop",
+              description: "Browse products and place new orders"
+            },
+            {
+              name: "Returns",
+              path: "/returns",
+              description: "Request returns for delivered orders"
+            },
+            {
+              name: "Payments",
+              path: "/payments",
+              description: "View payment history and methods"
+            }
+          ]}
         />
 
         {/* Customer Order Flow Guidance */}

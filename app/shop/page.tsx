@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 import SqlTooltip from '@/components/SqlTooltip';
+import PageExplanation from '@/components/PageExplanation';
 import {
   ShoppingCart,
   Plus,
@@ -236,6 +237,62 @@ export default function ShopPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <PageExplanation
+          title="Shop - Product Catalog"
+          description="Browse products, add items to cart, and proceed to checkout"
+          steps={[
+            {
+              title: "Browse Products",
+              description: "View all available products with real-time stock levels and pricing",
+              action: "Scroll through the product grid below"
+            },
+            {
+              title: "Search & Filter",
+              description: "Use the search bar to find specific products by name or description",
+              action: "Type in the search box above"
+            },
+            {
+              title: "Add to Cart",
+              description: "Click 'Add to Cart' to add items, then adjust quantities as needed",
+              action: "Click the blue 'Add to Cart' button"
+            },
+            {
+              title: "Review Cart",
+              description: "Click the cart button to review items and see your total",
+              action: "Click 'Cart (X)' button in top right"
+            },
+            {
+              title: "Checkout",
+              description: "When ready, proceed to checkout to complete your order",
+              action: "Click 'Proceed to Checkout' in cart"
+            }
+          ]}
+          tips={[
+            "Products show real-time stock levels from all warehouses",
+            "Your cart is automatically saved in your browser",
+            "Free shipping is available on orders over $100",
+            "Low stock items are marked with a red 'Low stock' badge",
+            "You can adjust quantities directly in the cart"
+          ]}
+          relatedPages={[
+            {
+              name: "Checkout",
+              path: "/checkout",
+              description: "Complete your purchase and arrange delivery"
+            },
+            {
+              name: "Orders",
+              path: "/orders",
+              description: "Track your order history and status"
+            },
+            {
+              name: "Payments",
+              path: "/payments",
+              description: "View payment history and methods"
+            }
+          ]}
+        />
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
