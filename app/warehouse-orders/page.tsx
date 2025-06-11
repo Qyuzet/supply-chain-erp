@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
 import SqlTooltip from '@/components/SqlTooltip';
-import PageExplanation from '@/components/PageExplanation';
 import {
   Package,
   Clock,
@@ -409,64 +408,8 @@ export default function WarehouseOrdersPage() {
         <DatabaseIndicator
           primaryTables={['Order', 'orderdetail']}
           relatedTables={['inventory', 'product', 'shipments', 'shippingcarrier']}
-          operations={['Process Orders', 'Check Inventory', 'Assign Carriers']}
-          description="Warehouse order processing and fulfillment management"
-        />
-
-        <PageExplanation
-          title="Warehouse Order Processing"
-          description="Process customer orders through the warehouse fulfillment workflow"
-          steps={[
-            {
-              title: "Review Pending Orders",
-              description: "Check orders that need to be processed and prepared for shipment",
-              action: "View orders with 'pending' status"
-            },
-            {
-              title: "Check Inventory",
-              description: "Verify that all ordered items are available in warehouse stock",
-              action: "System automatically checks inventory levels"
-            },
-            {
-              title: "Assign Carrier",
-              description: "Select a shipping carrier for order delivery based on destination",
-              action: "Click 'Assign Carrier' and choose from available carriers"
-            },
-            {
-              title: "Update Order Status",
-              description: "Mark orders as 'ready to pickup' once carrier is assigned",
-              action: "Status automatically updates after carrier assignment"
-            },
-            {
-              title: "Track Shipments",
-              description: "Monitor orders through the shipping process until delivery",
-              action: "View shipment status in the orders table"
-            }
-          ]}
-          tips={[
-            "Orders are processed in FIFO (First In, First Out) order for fairness",
-            "Inventory is automatically checked and reserved when processing orders",
-            "Choose carriers based on delivery location and service requirements",
-            "Orders move from 'pending' → 'ready to pickup' → 'shipped' → 'delivered'",
-            "Carriers will pick up orders marked as 'ready to pickup'"
-          ]}
-          relatedPages={[
-            {
-              name: "Inventory",
-              path: "/inventory",
-              description: "Manage warehouse stock levels and locations"
-            },
-            {
-              name: "Carriers",
-              path: "/carriers",
-              description: "Manage shipping carrier information"
-            },
-            {
-              name: "Locations",
-              path: "/locations",
-              description: "Manage warehouse locations and capacity"
-            }
-          ]}
+          operations={['Process FIFO Orders', 'Check Inventory', 'Assign Carriers', 'Update Status']}
+          description="FIFO order processing: pending → ready to pickup → shipped → delivered. Automatic inventory checks and carrier assignment for efficient fulfillment."
         />
 
         {/* Warehouse Flow Guidance */}

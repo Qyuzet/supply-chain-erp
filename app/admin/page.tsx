@@ -46,7 +46,6 @@ import {
 } from 'lucide-react';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
 import SqlTooltip from '@/components/SqlTooltip';
-import PageExplanation from '@/components/PageExplanation';
 import type { User } from '@/lib/auth';
 
 interface SystemUser {
@@ -387,61 +386,6 @@ export default function AdminPage() {
           description="System administration with user management and role-based profile creation"
         />
 
-        <PageExplanation
-          title="System Administration"
-          description="Manage users, roles, and system-wide operations"
-          steps={[
-            {
-              title: "View System Statistics",
-              description: "Monitor overall system health with user counts and activity metrics",
-              action: "Review the statistics cards at the top"
-            },
-            {
-              title: "Manage Users",
-              description: "View all system users and their roles in the users table",
-              action: "Browse the users table below"
-            },
-            {
-              title: "Create New Users",
-              description: "Add new users to the system with specific roles and permissions",
-              action: "Click 'Add User' button"
-            },
-            {
-              title: "Assign Roles",
-              description: "Set user roles (customer, supplier, warehouse, carrier, admin)",
-              action: "Select role in user creation form"
-            },
-            {
-              title: "Generate Sample Data",
-              description: "Create test data for development and demonstration purposes",
-              action: "Click 'Generate Sample Data' button"
-            }
-          ]}
-          tips={[
-            "Each role automatically creates appropriate profile records",
-            "Sample data helps test the system with realistic scenarios",
-            "Monitor user activity to ensure system security",
-            "Role-based access controls what users can see and do",
-            "Admin role has access to all system functions"
-          ]}
-          relatedPages={[
-            {
-              name: "Reports",
-              path: "/reports",
-              description: "View comprehensive system analytics and reports"
-            },
-            {
-              name: "Warehouses",
-              path: "/warehouses",
-              description: "Manage warehouse locations and operations"
-            },
-            {
-              name: "Carriers",
-              path: "/carriers",
-              description: "Manage shipping carrier information"
-            }
-          ]}
-        />
 
         {/* Header */}
         <div className="flex items-center justify-between">

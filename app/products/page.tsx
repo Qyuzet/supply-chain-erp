@@ -37,7 +37,6 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
 import SqlTooltip from '@/components/SqlTooltip';
-import PageExplanation from '@/components/PageExplanation';
 import type { User } from '@/lib/auth';
 
 interface ProductWithSupplier {
@@ -275,65 +274,9 @@ export default function ProductsPage() {
       <div className="space-y-6">
         <DatabaseIndicator
           primaryTables={['product']}
-          relatedTables={['supplier', 'inventory']}
-          operations={['Create Products', 'Manage Catalog', 'Auto-Create Inventory']}
-          description="Supplier product catalog management with automatic inventory entry creation"
-        />
-
-        <PageExplanation
-          title="Product Catalog Management"
-          description="Manage your product catalog and inventory as a supplier"
-          steps={[
-            {
-              title: "View Your Products",
-              description: "See all products you supply with current inventory levels across warehouses",
-              action: "Browse the products table below"
-            },
-            {
-              title: "Add New Product",
-              description: "Create new products in your catalog with pricing and descriptions",
-              action: "Click 'Add Product' button"
-            },
-            {
-              title: "Set Product Details",
-              description: "Enter product name, description, and unit price for customer visibility",
-              action: "Fill out the product creation form"
-            },
-            {
-              title: "Automatic Inventory Setup",
-              description: "System automatically creates inventory entries in all warehouses",
-              action: "Inventory entries created with 0 initial stock"
-            },
-            {
-              title: "Monitor Performance",
-              description: "Track which products are selling well and manage stock levels",
-              action: "View inventory levels in the table"
-            }
-          ]}
-          tips={[
-            "New products automatically get inventory entries in all warehouses",
-            "Set competitive pricing to attract more customers",
-            "Use clear, descriptive product names and descriptions",
-            "Monitor inventory levels to ensure adequate stock",
-            "Products appear in the customer shop immediately after creation"
-          ]}
-          relatedPages={[
-            {
-              name: "Purchase Orders",
-              path: "/purchase-orders",
-              description: "View and manage incoming purchase orders"
-            },
-            {
-              name: "Production",
-              path: "/production",
-              description: "Manage production orders for your products"
-            },
-            {
-              name: "Performance",
-              path: "/supplier-performance",
-              description: "View your supplier performance metrics"
-            }
-          ]}
+          relatedTables={['supplier', 'inventory', 'orderdetail']}
+          operations={['Create Products', 'Manage Catalog', 'Auto-Create Inventory', 'Track Sales']}
+          description="Supplier product catalog with automatic inventory initialization across all warehouses. Products appear in customer shop immediately after creation."
         />
 
       <div className="flex items-center justify-between">
