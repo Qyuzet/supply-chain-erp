@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
+import SqlTooltip from '@/components/SqlTooltip';
 import { 
   Package, 
   Plus, 
@@ -243,9 +244,62 @@ export default function ProductionPage() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Production Orders</h1>
-            <p className="text-gray-600">Manage manufacturing and production workflow</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Production Orders</h1>
+              <p className="text-gray-600">Manage manufacturing and production workflow</p>
+            </div>
+            <SqlTooltip
+              page="Production"
+              queries={[
+                {
+                  title: "Load Production Orders with FIFO",
+                  description: "Get production orders with product details using FIFO ordering",
+                  type: "SELECT",
+                  sql: `SELECT
+  pr.*,
+  p.productname,
+  p.unitprice,
+  s.suppliername
+FROM production pr
+JOIN product p ON pr.productid = p.productid
+LEFT JOIN supplier s ON p.supplierid = s.supplierid
+ORDER BY pr.startdate ASC; -- FIFO: First In, First Out`
+                },
+                {
+                  title: "Create Production Order",
+                  description: "Request production from factory",
+                  type: "INSERT",
+                  sql: `INSERT INTO production (
+  productionid,
+  productid,
+  quantity,
+  startdate,
+  expectedcompletiondate,
+  status
+) VALUES (
+  gen_random_uuid(),
+  $1, $2, NOW(), $3, 'pending'
+);`
+                },
+                {
+                  title: "Update Production Status",
+                  description: "Update production status with logging",
+                  type: "UPDATE",
+                  sql: `UPDATE production
+SET status = $1
+WHERE productionid = $2;
+
+-- Log status change
+INSERT INTO productionstatuslog (
+  productionid, oldstatus, newstatus,
+  changedat, note
+) VALUES (
+  $2, $3, $1, NOW(), $4
+);`
+                }
+              ]}
+            />
           </div>
           
           <Dialog open={isCreating} onOpenChange={setIsCreating}>

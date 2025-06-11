@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
+import SqlTooltip from '@/components/SqlTooltip';
 import type { User } from '@/lib/auth';
 
 interface ProductWithSupplier {
@@ -279,11 +280,76 @@ export default function ProductsPage() {
         />
 
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-          <p className="text-gray-600">
-            {user?.role === 'supplier' ? 'Manage your product catalog' : 'All products in the system'}
-          </p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Products</h1>
+            <p className="text-gray-600">
+              {user?.role === 'supplier' ? 'Manage your product catalog' : 'All products in the system'}
+            </p>
+          </div>
+          <SqlTooltip
+            page="Products"
+            queries={[
+              {
+                title: "Load Products with Supplier Info",
+                description: "Get all products with supplier details using FIFO ordering",
+                type: "SELECT",
+                sql: `SELECT
+  p.*,
+  s.suppliername,
+  s.contactinfo
+FROM product p
+LEFT JOIN supplier s ON p.supplierid = s.supplierid
+ORDER BY p.productname ASC; -- Alphabetical order`
+              },
+              {
+                title: "Create Product",
+                description: "Add new product to catalog with automatic inventory initialization",
+                type: "INSERT",
+                sql: `INSERT INTO product (
+  productid,
+  productname,
+  description,
+  unitprice,
+  supplierid
+) VALUES (
+  gen_random_uuid(),
+  $1, $2, $3, $4
+);
+
+-- Auto-create inventory entry
+INSERT INTO inventory (
+  productid, warehouseid, quantity
+) VALUES (
+  $productid, $warehouseid, 0
+);`
+              },
+              {
+                title: "Update Product",
+                description: "Update product information and pricing",
+                type: "UPDATE",
+                sql: `UPDATE product
+SET
+  productname = $1,
+  description = $2,
+  unitprice = $3
+WHERE productid = $4
+  AND supplierid = $5; -- Ensure supplier owns product`
+              },
+              {
+                title: "Delete Product",
+                description: "Remove product from catalog (with constraints)",
+                type: "DELETE",
+                sql: `DELETE FROM product
+WHERE productid = $1
+  AND supplierid = $2 -- Ensure supplier owns product
+  AND NOT EXISTS (
+    SELECT 1 FROM orderdetail
+    WHERE productid = $1
+  ); -- Prevent deletion if used in orders`
+              }
+            ]}
+          />
         </div>
         {user?.role === 'supplier' && (
           <Button onClick={openCreateDialog}>

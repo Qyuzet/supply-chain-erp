@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
+import SqlTooltip from '@/components/SqlTooltip';
 import { 
   ShoppingCart, 
   Plus, 
@@ -210,9 +211,60 @@ export default function PurchaseOrdersPage() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Purchase Orders</h1>
-            <p className="text-gray-600">Manage supplier purchase orders and procurement</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Purchase Orders</h1>
+              <p className="text-gray-600">Manage supplier purchase orders and procurement</p>
+            </div>
+            <SqlTooltip
+              page="Purchase Orders"
+              queries={[
+                {
+                  title: "Load Purchase Orders with FIFO",
+                  description: "Get purchase orders with supplier details using FIFO ordering",
+                  type: "SELECT",
+                  sql: `SELECT
+  po.*,
+  s.suppliername,
+  s.contactinfo
+FROM purchaseorder po
+LEFT JOIN supplier s ON po.supplierid = s.supplierid
+ORDER BY po.orderdate ASC; -- FIFO: First In, First Out`
+                },
+                {
+                  title: "Create Purchase Order",
+                  description: "Create new purchase order to supplier",
+                  type: "INSERT",
+                  sql: `INSERT INTO purchaseorder (
+  purchaseorderid,
+  supplierid,
+  orderdate,
+  expecteddeliverydate,
+  totalamount,
+  status
+) VALUES (
+  gen_random_uuid(),
+  $1, NOW(), $2, $3, 'pending'
+);`
+                },
+                {
+                  title: "Update Purchase Order Status",
+                  description: "Update PO status with history tracking",
+                  type: "UPDATE",
+                  sql: `UPDATE purchaseorder
+SET status = $1
+WHERE purchaseorderid = $2;
+
+-- Insert status history
+INSERT INTO purchaseorderstatushistory (
+  purchaseorderid, oldstatus, newstatus,
+  changedat, note
+) VALUES (
+  $2, $3, $1, NOW(), $4
+);`
+                }
+              ]}
+            />
           </div>
 
           {/* Only warehouse and admin can create POs */}

@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
+import SqlTooltip from '@/components/SqlTooltip';
 import { 
   DollarSign, 
   Plus, 
@@ -348,16 +349,89 @@ export default function PaymentsPage() {
         />
 
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {user?.role === 'customer' ? 'My Payments' : 'Payments'}
-          </h1>
-          <p className="text-gray-600">
-            {user?.role === 'customer'
-              ? 'View your order payments and transaction history'
-              : 'Manage customer and supplier payment transactions'
-            }
-          </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {user?.role === 'customer' ? 'My Payments' : 'Payments'}
+              </h1>
+              <p className="text-gray-600">
+                {user?.role === 'customer'
+                  ? 'View your order payments and transaction history'
+                  : 'Manage customer and supplier payment transactions'
+                }
+              </p>
+            </div>
+            <SqlTooltip
+              page="Payments"
+              queries={[
+                {
+                  title: "Load Customer Payments with FIFO",
+                  description: "Get customer payments ordered by payment date",
+                  type: "SELECT",
+                  sql: `SELECT
+  pc.*,
+  o.orderid,
+  o.orderdate,
+  c.customername
+FROM paymentcustomer pc
+JOIN "Order" o ON pc.orderid = o.orderid
+JOIN customers c ON pc.customerid = c.customerid
+WHERE pc.customerid = $1
+ORDER BY pc.paymentdate DESC; -- Latest first`
+                },
+                {
+                  title: "Load Supplier Payments",
+                  description: "Get supplier payments with purchase order details",
+                  type: "SELECT",
+                  sql: `SELECT
+  ps.*,
+  po.purchaseorderid,
+  po.orderdate,
+  po.totalamount
+FROM paymentsupplier ps
+JOIN purchaseorder po ON ps.purchaseorderid = po.purchaseorderid
+ORDER BY ps.paymentdate DESC; -- Latest first`
+                },
+                {
+                  title: "Create Customer Payment",
+                  description: "Auto-generated during checkout process",
+                  type: "INSERT",
+                  sql: `INSERT INTO paymentcustomer (
+  paymentid,
+  customerid,
+  orderid,
+  amount,
+  paymentmethod,
+  paymentdate,
+  status
+) VALUES (
+  gen_random_uuid(),
+  $1, $2, $3, $4,
+  NOW(), 'completed'
+);`
+                },
+                {
+                  title: "Create Supplier Payment",
+                  description: "Record payment to supplier for purchase orders",
+                  type: "INSERT",
+                  sql: `INSERT INTO paymentsupplier (
+  paymentid,
+  supplierid,
+  purchaseorderid,
+  amount,
+  paymentmethod,
+  paymentdate,
+  status
+) VALUES (
+  gen_random_uuid(),
+  $1, $2, $3, $4,
+  NOW(), 'completed'
+);`
+                }
+              ]}
+            />
+          </div>
         </div>
 
         {/* Stats */}

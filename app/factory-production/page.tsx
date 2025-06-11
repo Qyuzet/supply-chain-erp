@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
+import SqlTooltip from '@/components/SqlTooltip';
 import { 
   Factory, 
   Plus, 
@@ -338,9 +339,67 @@ export default function FactoryProductionPage() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Factory Production</h1>
-            <p className="text-gray-600">Manage manufacturing orders and production workflow</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Factory Production</h1>
+              <p className="text-gray-600">Manage manufacturing orders and production workflow</p>
+            </div>
+            <SqlTooltip
+              page="Factory Production"
+              queries={[
+                {
+                  title: "Load Production Requests with FIFO",
+                  description: "Get production requests from suppliers using FIFO ordering",
+                  type: "SELECT",
+                  sql: `SELECT
+  pr.*,
+  p.productname,
+  p.unitprice,
+  s.suppliername
+FROM production pr
+JOIN product p ON pr.productid = p.productid
+LEFT JOIN supplier s ON p.supplierid = s.supplierid
+WHERE pr.status IN ('pending', 'in_progress')
+ORDER BY pr.startdate ASC; -- FIFO: First In, First Out`
+                },
+                {
+                  title: "Update Production Status",
+                  description: "Update manufacturing status with detailed logging",
+                  type: "UPDATE",
+                  sql: `UPDATE production
+SET status = $1,
+    actualcompletiondate = CASE
+      WHEN $1 = 'completed' THEN NOW()
+      ELSE actualcompletiondate
+    END
+WHERE productionid = $2;
+
+-- Log status change
+INSERT INTO productionstatuslog (
+  productionid, oldstatus, newstatus,
+  changedat, note
+) VALUES (
+  $2, $3, $1, NOW(), $4
+);`
+                },
+                {
+                  title: "Complete Production",
+                  description: "Mark production complete and update inventory",
+                  type: "UPDATE",
+                  sql: `-- Update production status
+UPDATE production
+SET status = 'completed',
+    actualcompletiondate = NOW()
+WHERE productionid = $1;
+
+-- Update warehouse inventory
+UPDATE inventory
+SET quantity = quantity + $2
+WHERE productid = $3
+  AND warehouseid = $4;`
+                }
+              ]}
+            />
           </div>
           
           <Dialog open={isCreating} onOpenChange={setIsCreating}>

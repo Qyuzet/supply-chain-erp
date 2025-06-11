@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
+import SqlTooltip from '@/components/SqlTooltip';
 import type { User } from '@/lib/auth';
 
 interface InventoryItem {
@@ -231,9 +232,67 @@ export default function InventoryPage() {
         />
 
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Inventory Management</h1>
-          <p className="text-gray-600">Monitor and manage warehouse inventory levels</p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Inventory Management</h1>
+            <p className="text-gray-600">Monitor and manage warehouse inventory levels</p>
+          </div>
+          <SqlTooltip
+            page="Inventory"
+            queries={[
+              {
+                title: "Load Inventory with Product Details",
+                description: "Get inventory levels with product and warehouse information",
+                type: "SELECT",
+                sql: `SELECT
+  i.*,
+  p.productname,
+  p.unitprice,
+  w.warehousename,
+  w.location,
+  s.suppliername
+FROM inventory i
+JOIN product p ON i.productid = p.productid
+JOIN warehouses w ON i.warehouseid = w.warehouseid
+LEFT JOIN supplier s ON p.supplierid = s.supplierid
+ORDER BY p.productname ASC;`
+              },
+              {
+                title: "Update Inventory Quantity",
+                description: "Update stock levels with movement logging",
+                type: "UPDATE",
+                sql: `UPDATE inventory
+SET quantity = $1
+WHERE productid = $2
+  AND warehouseid = $3;
+
+-- Log inventory movement
+INSERT INTO inventorylog (
+  logid, productid, warehouseid,
+  movementtype, quantity,
+  referencetype, referenceid,
+  timestamp
+) VALUES (
+  gen_random_uuid(), $2, $3,
+  $4, $5, $6, $7, NOW()
+);`
+              },
+              {
+                title: "Check Low Stock Items",
+                description: "Find products with low inventory levels",
+                type: "SELECT",
+                sql: `SELECT
+  i.*,
+  p.productname,
+  w.warehousename
+FROM inventory i
+JOIN product p ON i.productid = p.productid
+JOIN warehouses w ON i.warehouseid = w.warehouseid
+WHERE i.quantity < 10 -- Low stock threshold
+ORDER BY i.quantity ASC;`
+              }
+            ]}
+          />
         </div>
       </div>
 

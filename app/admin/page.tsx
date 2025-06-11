@@ -45,6 +45,7 @@ import {
   Download
 } from 'lucide-react';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
+import SqlTooltip from '@/components/SqlTooltip';
 import type { User } from '@/lib/auth';
 
 interface SystemUser {
@@ -387,9 +388,71 @@ export default function AdminPage() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
-            <p className="text-gray-600">System administration and user management</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
+              <p className="text-gray-600">System administration and user management</p>
+            </div>
+            <SqlTooltip
+              page="Admin"
+              queries={[
+                {
+                  title: "Load All Users",
+                  description: "Get all system users with role information",
+                  type: "SELECT",
+                  sql: `SELECT
+  u.*,
+  CASE
+    WHEN u.role = 'customer' THEN c.customername
+    WHEN u.role = 'supplier' THEN s.suppliername
+    ELSE u.fullname
+  END as display_name
+FROM users u
+LEFT JOIN customers c ON u.userid = c.userid
+LEFT JOIN supplier s ON u.userid = s.supplierid
+ORDER BY u.createdat DESC;`
+                },
+                {
+                  title: "Create User with Role Profile",
+                  description: "Create user and associated role-specific profile",
+                  type: "INSERT",
+                  sql: `-- Create user
+INSERT INTO users (
+  userid, email, fullname, role, isactive
+) VALUES (
+  gen_random_uuid(), $1, $2, $3, true
+);
+
+-- Create role profile (example for customer)
+INSERT INTO customers (
+  userid, customername, phone, address
+) VALUES (
+  $userid, $2, '+1 (555) 000-0000',
+  '123 Main St, City, State 12345'
+);`
+                },
+                {
+                  title: "System Statistics",
+                  description: "Get comprehensive system statistics",
+                  type: "SELECT",
+                  sql: `-- Multiple queries for stats
+SELECT COUNT(*) as total_users FROM users;
+SELECT COUNT(*) as total_orders FROM "Order";
+SELECT COUNT(*) as total_products FROM product;
+SELECT COUNT(*) as total_shipments FROM shipments;
+SELECT COUNT(*) as active_users FROM users WHERE isactive = true;
+SELECT COUNT(*) as pending_orders FROM "Order" WHERE status = 'pending';`
+                },
+                {
+                  title: "Update User Status",
+                  description: "Activate or deactivate user accounts",
+                  type: "UPDATE",
+                  sql: `UPDATE users
+SET isactive = $1
+WHERE userid = $2;`
+                }
+              ]}
+            />
           </div>
           <div className="flex gap-2">
             <Button onClick={handleCreateSampleData} variant="outline">

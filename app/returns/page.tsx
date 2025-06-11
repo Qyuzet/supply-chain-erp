@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
+import SqlTooltip from '@/components/SqlTooltip';
 import { 
   Package, 
   Plus, 
@@ -237,9 +238,65 @@ export default function ReturnsPage() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Returns</h1>
-            <p className="text-gray-600">Manage product returns and refund requests</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Returns</h1>
+              <p className="text-gray-600">Manage product returns and refund requests</p>
+            </div>
+            <SqlTooltip
+              page="Returns"
+              queries={[
+                {
+                  title: "Load Delivered Orders for Returns",
+                  description: "Get delivered orders that can be returned using FIFO ordering",
+                  type: "SELECT",
+                  sql: `SELECT
+  o.*,
+  c.customername,
+  od.quantity,
+  p.productname,
+  p.unitprice
+FROM "Order" o
+JOIN customers c ON o.customerid = c.customerid
+JOIN orderdetail od ON o.orderid = od.orderid
+JOIN product p ON od.productid = p.productid
+WHERE o.status = 'delivered'
+ORDER BY o.orderdate ASC; -- FIFO: First In, First Out`
+                },
+                {
+                  title: "Create Return Request",
+                  description: "Insert new return request with status tracking",
+                  type: "INSERT",
+                  sql: `INSERT INTO returns (
+  returnid,
+  orderid,
+  returndate,
+  reason,
+  status,
+  refundamount
+) VALUES (
+  gen_random_uuid(),
+  $1, NOW(), $2, 'pending', $3
+);`
+                },
+                {
+                  title: "Update Return Status",
+                  description: "Update return status with history logging",
+                  type: "UPDATE",
+                  sql: `UPDATE returns
+SET status = $1
+WHERE returnid = $2;
+
+-- Insert status history
+INSERT INTO returnstatushistory (
+  returnid, oldstatus, newstatus,
+  changedat, note
+) VALUES (
+  $2, $3, $1, NOW(), $4
+);`
+                }
+              ]}
+            />
           </div>
           
           <Dialog open={isCreating} onOpenChange={setIsCreating}>

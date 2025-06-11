@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
+import SqlTooltip from '@/components/SqlTooltip';
 import type { User } from '@/lib/auth';
 
 interface OrderWithDetails {
@@ -437,11 +438,52 @@ export default function OrdersPage() {
         </div>
 
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Orders</h1>
-          <p className="text-gray-600">
-            {user?.role === 'customer' ? 'Your order history and tracking' : 'Manage all customer orders'}
-          </p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Orders</h1>
+            <p className="text-gray-600">
+              {user?.role === 'customer' ? 'Your order history and tracking' : 'Manage all customer orders'}
+            </p>
+          </div>
+          <SqlTooltip
+            page="Orders"
+            queries={[
+              {
+                title: "Load Customer Orders with FIFO",
+                description: "Get customer orders with product details using FIFO ordering",
+                type: "SELECT",
+                sql: `SELECT
+  o.*,
+  od.quantity,
+  p.productname,
+  p.unitprice,
+  s.status as shipment_status,
+  s.trackingnumber
+FROM "Order" o
+JOIN customers c ON o.customerid = c.customerid
+JOIN orderdetail od ON o.orderid = od.orderid
+JOIN product p ON od.productid = p.productid
+LEFT JOIN shipments s ON o.orderid = s.orderid
+WHERE c.userid = $1
+ORDER BY o.orderdate ASC; -- FIFO: First In, First Out`
+              },
+              {
+                title: "Track Order Status",
+                description: "Monitor order progression through status workflow",
+                type: "SELECT",
+                sql: `SELECT
+  osh.*,
+  u.email as changed_by
+FROM orderstatushistory osh
+LEFT JOIN users u ON osh.changedbyuserid = u.userid
+WHERE osh.orderid = $1
+ORDER BY osh.changedat ASC;
+
+-- Status flow:
+-- pending → confirmed → processing → shipped → in_transit → delivered`
+              }
+            ]}
+          />
         </div>
         {user?.role === 'customer' && (
           <Dialog open={isCreating} onOpenChange={setIsCreating}>
