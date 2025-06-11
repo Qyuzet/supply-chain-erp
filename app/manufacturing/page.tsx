@@ -8,8 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
-import { 
-  Factory, 
+import SqlTooltip from '@/components/SqlTooltip';
+import {
+  Factory,
   TrendingUp,
   Clock,
   CheckCircle,
@@ -209,9 +210,74 @@ export default function ManufacturingPage() {
         />
 
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Manufacturing Dashboard</h1>
-          <p className="text-gray-600">Monitor production performance and manufacturing metrics</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Manufacturing Dashboard</h1>
+              <p className="text-gray-600">Monitor production performance and manufacturing metrics</p>
+            </div>
+            <SqlTooltip
+              page="Manufacturing Dashboard"
+              queries={[
+                {
+                  title: "Production Statistics",
+                  description: "Get comprehensive production metrics and analytics",
+                  type: "SELECT",
+                  sql: `SELECT
+  COUNT(*) as total_orders,
+  COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_orders,
+  COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as in_progress_orders,
+  COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_orders,
+  SUM(CASE WHEN status = 'completed' THEN quantity ELSE 0 END) as total_produced
+FROM production;`
+                },
+                {
+                  title: "Recent Production Orders",
+                  description: "Get latest production orders with product and supplier details",
+                  type: "SELECT",
+                  sql: `SELECT
+  pr.*,
+  p.productname,
+  p.unitprice,
+  s.suppliername
+FROM production pr
+JOIN product p ON pr.productid = p.productid
+LEFT JOIN supplier s ON p.supplierid = s.supplierid
+ORDER BY pr.startdate DESC
+LIMIT 5;`
+                },
+                {
+                  title: "Top Manufactured Products",
+                  description: "Analyze most produced products by quantity",
+                  type: "SELECT",
+                  sql: `SELECT
+  p.productid,
+  p.productname,
+  p.unitprice,
+  SUM(pr.quantity) as total_produced,
+  COUNT(pr.productionid) as order_count
+FROM production pr
+JOIN product p ON pr.productid = p.productid
+WHERE pr.status = 'completed'
+GROUP BY p.productid, p.productname, p.unitprice
+ORDER BY total_produced DESC
+LIMIT 5;`
+                },
+                {
+                  title: "Production Efficiency Rate",
+                  description: "Calculate completion rate and performance metrics",
+                  type: "SELECT",
+                  sql: `SELECT
+  COUNT(*) as total_orders,
+  COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_orders,
+  (COUNT(CASE WHEN status = 'completed' THEN 1 END) * 100.0 / COUNT(*)) as completion_rate,
+  AVG(EXTRACT(DAYS FROM (actualcompletiondate - startdate))) as avg_production_days
+FROM production
+WHERE startdate IS NOT NULL;`
+                }
+              ]}
+            />
+          </div>
         </div>
 
         {/* Key Metrics */}

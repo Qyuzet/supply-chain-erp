@@ -47,6 +47,7 @@ import {
   FileText
 } from 'lucide-react';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
+import SqlTooltip from '@/components/SqlTooltip';
 import type { User } from '@/lib/auth';
 
 interface ReportData {
@@ -448,9 +449,95 @@ export default function ReportsPage() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Reports & Analytics</h1>
-            <p className="text-gray-600">Business intelligence and performance metrics</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Reports & Analytics</h1>
+              <p className="text-gray-600">Business intelligence and performance metrics</p>
+            </div>
+            <SqlTooltip
+              page="Reports & Analytics"
+              queries={[
+                {
+                  title: "Orders by Status Analysis",
+                  description: "Analyze order distribution across different statuses",
+                  type: "SELECT",
+                  sql: `SELECT
+  status,
+  COUNT(*) as order_count,
+  (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM "Order")) as percentage
+FROM "Order"
+WHERE orderdate >= NOW() - INTERVAL '30 days'
+GROUP BY status
+ORDER BY order_count DESC;`
+                },
+                {
+                  title: "Monthly Revenue Analysis",
+                  description: "Calculate monthly orders and revenue trends",
+                  type: "SELECT",
+                  sql: `SELECT
+  DATE_TRUNC('month', o.orderdate) as month,
+  COUNT(o.orderid) as total_orders,
+  SUM(od.quantity * p.unitprice) as total_revenue,
+  AVG(od.quantity * p.unitprice) as avg_order_value
+FROM "Order" o
+JOIN orderdetail od ON o.orderid = od.orderid
+JOIN product p ON od.productid = p.productid
+WHERE o.orderdate >= NOW() - INTERVAL '6 months'
+GROUP BY DATE_TRUNC('month', o.orderdate)
+ORDER BY month DESC;`
+                },
+                {
+                  title: "Top Products by Revenue",
+                  description: "Identify best-performing products by sales volume and revenue",
+                  type: "SELECT",
+                  sql: `SELECT
+  p.productname,
+  SUM(od.quantity) as total_quantity_sold,
+  SUM(od.quantity * p.unitprice) as total_revenue,
+  COUNT(DISTINCT o.orderid) as order_count,
+  AVG(od.quantity * p.unitprice) as avg_order_value
+FROM orderdetail od
+JOIN product p ON od.productid = p.productid
+JOIN "Order" o ON od.orderid = o.orderid
+WHERE o.orderdate >= NOW() - INTERVAL '30 days'
+GROUP BY p.productid, p.productname
+ORDER BY total_revenue DESC
+LIMIT 10;`
+                },
+                {
+                  title: "User Distribution by Role",
+                  description: "Analyze user base composition across different roles",
+                  type: "SELECT",
+                  sql: `SELECT
+  role,
+  COUNT(*) as user_count,
+  COUNT(CASE WHEN isactive = true THEN 1 END) as active_users,
+  (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM users)) as percentage
+FROM users
+GROUP BY role
+ORDER BY user_count DESC;`
+                },
+                {
+                  title: "Inventory Status Analysis",
+                  description: "Categorize inventory levels and identify stock issues",
+                  type: "SELECT",
+                  sql: `SELECT
+  CASE
+    WHEN i.quantity = 0 THEN 'Out of Stock'
+    WHEN i.quantity < 10 THEN 'Low Stock'
+    WHEN i.quantity > 100 THEN 'Overstocked'
+    ELSE 'Normal'
+  END as stock_status,
+  COUNT(*) as product_count,
+  SUM(i.quantity) as total_quantity,
+  AVG(i.quantity) as avg_quantity
+FROM inventory i
+JOIN product p ON i.productid = p.productid
+GROUP BY stock_status
+ORDER BY product_count DESC;`
+                }
+              ]}
+            />
           </div>
           <div className="flex gap-2">
             <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>

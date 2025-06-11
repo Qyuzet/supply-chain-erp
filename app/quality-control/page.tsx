@@ -14,9 +14,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
-import { 
-  Shield, 
-  Plus, 
+import SqlTooltip from '@/components/SqlTooltip';
+import {
+  Shield,
+  Plus,
   CheckCircle,
   AlertTriangle,
   X,
@@ -227,9 +228,80 @@ export default function QualityControlPage() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Quality Control</h1>
-            <p className="text-gray-600">Inspect production quality and maintain standards</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Quality Control</h1>
+              <p className="text-gray-600">Inspect production quality and maintain standards</p>
+            </div>
+            <SqlTooltip
+              page="Quality Control"
+              queries={[
+                {
+                  title: "Load Completed Productions for QC",
+                  description: "Get completed production orders ready for quality inspection",
+                  type: "SELECT",
+                  sql: `SELECT
+  pr.*,
+  p.productname,
+  p.unitprice
+FROM production pr
+JOIN product p ON pr.productid = p.productid
+WHERE pr.status = 'completed'
+ORDER BY pr.actualcompletiondate DESC;`
+                },
+                {
+                  title: "Quality Check Statistics",
+                  description: "Calculate quality metrics and pass rates",
+                  type: "SELECT",
+                  sql: `-- Simulated quality check analysis
+SELECT
+  COUNT(*) as total_inspections,
+  COUNT(CASE WHEN quality_score >= 80 THEN 1 END) as passed_inspections,
+  AVG(quality_score) as avg_quality_score,
+  (COUNT(CASE WHEN quality_score >= 80 THEN 1 END) * 100.0 / COUNT(*)) as pass_rate
+FROM (
+  SELECT
+    productionid,
+    (70 + RANDOM() * 30) as quality_score -- Simulated scores 70-100
+  FROM production
+  WHERE status = 'completed'
+) quality_data;`
+                },
+                {
+                  title: "Record Quality Check",
+                  description: "Insert quality inspection results (simulated)",
+                  type: "INSERT",
+                  sql: `-- In real implementation, would insert into quality_checks table
+INSERT INTO quality_checks (
+  checkid,
+  productionid,
+  checkdate,
+  qualityscore,
+  passed,
+  notes,
+  checkedby
+) VALUES (
+  gen_random_uuid(),
+  $1, NOW(), $2, $3, $4, $5
+);`
+                },
+                {
+                  title: "Quality Trend Analysis",
+                  description: "Analyze quality trends over time",
+                  type: "SELECT",
+                  sql: `SELECT
+  DATE_TRUNC('week', pr.actualcompletiondate) as week,
+  COUNT(*) as total_productions,
+  AVG(70 + RANDOM() * 30) as avg_quality_score,
+  COUNT(CASE WHEN (70 + RANDOM() * 30) >= 80 THEN 1 END) as passed_count
+FROM production pr
+WHERE pr.status = 'completed'
+  AND pr.actualcompletiondate >= NOW() - INTERVAL '3 months'
+GROUP BY DATE_TRUNC('week', pr.actualcompletiondate)
+ORDER BY week DESC;`
+                }
+              ]}
+            />
           </div>
           
           <Dialog open={isCreating} onOpenChange={setIsCreating}>

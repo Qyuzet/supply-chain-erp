@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
+import SqlTooltip from '@/components/SqlTooltip';
 import { Building, Plus, Edit, MapPin, Package, Users, Trash2 } from 'lucide-react';
 import type { User } from '@/lib/auth';
 
@@ -316,9 +317,87 @@ export default function WarehousesPage() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Warehouse Management</h1>
-            <p className="text-gray-600">Manage warehouse locations and operations</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Warehouse Management</h1>
+              <p className="text-gray-600">Manage warehouse locations and operations</p>
+            </div>
+            <SqlTooltip
+              page="Warehouse Management"
+              queries={[
+                {
+                  title: "Load Warehouses with Statistics",
+                  description: "Get warehouses with inventory and operational statistics",
+                  type: "SELECT",
+                  sql: `SELECT
+  w.*,
+  COUNT(i.productid) as total_products,
+  SUM(i.quantity) as total_inventory,
+  COUNT(s.shipmentid) as total_shipments,
+  SUM(i.quantity * p.unitprice) as total_value
+FROM warehouses w
+LEFT JOIN inventory i ON w.warehouseid = i.warehouseid
+LEFT JOIN product p ON i.productid = p.productid
+LEFT JOIN shipments s ON w.warehouseid = s.warehouseid
+GROUP BY w.warehouseid
+ORDER BY w.warehousename ASC;`
+                },
+                {
+                  title: "Create Warehouse",
+                  description: "Add new warehouse location to the system",
+                  type: "INSERT",
+                  sql: `INSERT INTO warehouses (
+  warehouseid,
+  warehousename,
+  location
+) VALUES (
+  gen_random_uuid(),
+  $1, $2
+);`
+                },
+                {
+                  title: "Update Warehouse",
+                  description: "Update warehouse information and location details",
+                  type: "UPDATE",
+                  sql: `UPDATE warehouses
+SET
+  warehousename = $1,
+  location = $2
+WHERE warehouseid = $3;`
+                },
+                {
+                  title: "Delete Warehouse",
+                  description: "Remove warehouse (with constraint checks)",
+                  type: "DELETE",
+                  sql: `DELETE FROM warehouses
+WHERE warehouseid = $1
+  AND NOT EXISTS (
+    SELECT 1 FROM inventory
+    WHERE warehouseid = $1 AND quantity > 0
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM shipments
+    WHERE warehouseid = $1 AND status != 'delivered'
+  );`
+                },
+                {
+                  title: "Warehouse Inventory Analysis",
+                  description: "Analyze inventory levels and identify low stock items",
+                  type: "SELECT",
+                  sql: `SELECT
+  w.warehousename,
+  COUNT(i.productid) as total_products,
+  SUM(i.quantity) as total_items,
+  COUNT(CASE WHEN i.quantity < 10 THEN 1 END) as low_stock_items,
+  SUM(i.quantity * p.unitprice) as total_value
+FROM warehouses w
+LEFT JOIN inventory i ON w.warehouseid = i.warehouseid
+LEFT JOIN product p ON i.productid = p.productid
+GROUP BY w.warehouseid, w.warehousename
+ORDER BY total_value DESC;`
+                }
+              ]}
+            />
           </div>
           <Dialog open={isCreating} onOpenChange={setIsCreating}>
             <DialogTrigger asChild>
