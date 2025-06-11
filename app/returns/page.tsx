@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
 import SqlTooltip from '@/components/SqlTooltip';
+import PageExplanation from '@/components/PageExplanation';
 import { 
   Package, 
   Plus, 
@@ -234,6 +235,57 @@ export default function ReturnsPage() {
           relatedTables={['Order', 'product', 'customers', 'returnstatushistory']}
           operations={['Create Return Requests', 'Process Returns', 'Track Status']}
           description="Return management system with status tracking and customer integration"
+        />
+
+        <PageExplanation
+          title="Returns Management"
+          description="Request returns for delivered orders and track their processing status"
+          steps={[
+            {
+              title: "View Return History",
+              description: "See all your return requests and their current processing status",
+              action: "Browse the returns table below"
+            },
+            {
+              title: "Create Return Request",
+              description: "Request a return for items from delivered orders",
+              action: "Click 'Request Return' button"
+            },
+            {
+              title: "Select Order Items",
+              description: "Choose which items from your delivered orders to return",
+              action: "Select order and specify items in the form"
+            },
+            {
+              title: "Provide Return Reason",
+              description: "Explain why you're returning the items for processing",
+              action: "Fill out the reason field in the form"
+            },
+            {
+              title: "Track Return Status",
+              description: "Monitor your return through: requested → approved → completed",
+              action: "Check status column in returns table"
+            }
+          ]}
+          tips={[
+            "Only delivered orders are eligible for returns",
+            "Provide clear reasons to speed up return approval",
+            "Return status updates automatically as they're processed",
+            "Approved returns will be processed for refund or replacement",
+            "Contact support if a return is stuck in 'requested' status"
+          ]}
+          relatedPages={[
+            {
+              name: "Orders",
+              path: "/orders",
+              description: "View your order history to identify returnable items"
+            },
+            {
+              name: "Payments",
+              path: "/payments",
+              description: "Track refunds for processed returns"
+            }
+          ]}
         />
 
         {/* Header */}

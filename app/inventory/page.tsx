@@ -44,6 +44,7 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
 import SqlTooltip from '@/components/SqlTooltip';
+import PageExplanation from '@/components/PageExplanation';
 import type { User } from '@/lib/auth';
 
 interface InventoryItem {
@@ -229,6 +230,62 @@ export default function InventoryPage() {
           relatedTables={['product', 'warehouses']}
           operations={['Track Stock Levels', 'Adjust Quantities', 'Monitor Alerts']}
           description="Real-time inventory management with stock level monitoring"
+        />
+
+        <PageExplanation
+          title="Inventory Management"
+          description="Monitor and manage stock levels across all warehouse locations"
+          steps={[
+            {
+              title: "Monitor Stock Levels",
+              description: "View current inventory quantities for all products across warehouses",
+              action: "Review the inventory table below"
+            },
+            {
+              title: "Identify Low Stock",
+              description: "Look for items with low quantities that need restocking",
+              action: "Check for red 'Low Stock' badges"
+            },
+            {
+              title: "Adjust Quantities",
+              description: "Update inventory levels when stock arrives or is consumed",
+              action: "Click 'Adjust Stock' button for any item"
+            },
+            {
+              title: "Track by Warehouse",
+              description: "See which warehouse locations have specific products",
+              action: "View warehouse column in the table"
+            },
+            {
+              title: "Monitor Alerts",
+              description: "Keep track of items that need immediate attention",
+              action: "Focus on items with quantity < 10"
+            }
+          ]}
+          tips={[
+            "Low stock items (< 10 units) are highlighted in red",
+            "Inventory is automatically updated when orders are processed",
+            "Each product can be stored in multiple warehouse locations",
+            "Regular stock adjustments help maintain accurate levels",
+            "Zero stock items prevent new orders from being placed"
+          ]}
+          relatedPages={[
+            {
+              name: "Warehouse Orders",
+              path: "/warehouse-orders",
+              description: "Process orders that affect inventory levels"
+            },
+            {
+              name: "Locations",
+              path: "/locations",
+              description: "Manage warehouse locations and capacity"
+            },
+            {
+              name: "Products",
+              path: "/products",
+              description: "View product catalog and details"
+            }
+          ]}
         />
 
       <div className="flex items-center justify-between">

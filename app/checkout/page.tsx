@@ -14,10 +14,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 import SqlTooltip from '@/components/SqlTooltip';
-import { 
-  CreditCard, 
-  Truck, 
-  MapPin, 
+import PageExplanation from '@/components/PageExplanation';
+import {
+  CreditCard,
+  Truck,
+  MapPin,
   Package,
   CheckCircle,
   Clock
@@ -391,6 +392,62 @@ export default function CheckoutPage() {
   return (
     <DashboardLayout>
       <div className="max-w-6xl mx-auto space-y-6">
+        <PageExplanation
+          title="Checkout Process"
+          description="Complete your order with delivery details and payment information"
+          steps={[
+            {
+              title: "Review Cart Items",
+              description: "Verify the products and quantities in your order",
+              action: "Check the order summary on the right"
+            },
+            {
+              title: "Enter Delivery Address",
+              description: "Provide the address where you want your order delivered",
+              action: "Fill out the delivery information form"
+            },
+            {
+              title: "Select Carrier",
+              description: "Choose a shipping carrier for your delivery",
+              action: "Select from available carriers"
+            },
+            {
+              title: "Choose Payment Method",
+              description: "Select how you want to pay for your order",
+              action: "Pick Credit Card, PayPal, or Bank Transfer"
+            },
+            {
+              title: "Place Order",
+              description: "Complete your purchase and receive order confirmation",
+              action: "Click 'Place Order' button"
+            }
+          ]}
+          tips={[
+            "Double-check your delivery address to avoid shipping delays",
+            "Payment is automatically processed when you place the order",
+            "You'll receive order confirmation and tracking information",
+            "Orders are processed in FIFO order by the warehouse",
+            "Choose carriers based on your delivery speed preferences"
+          ]}
+          relatedPages={[
+            {
+              name: "Shop",
+              path: "/shop",
+              description: "Continue shopping for more items"
+            },
+            {
+              name: "Orders",
+              path: "/orders",
+              description: "Track your order after placement"
+            },
+            {
+              name: "Payments",
+              path: "/payments",
+              description: "View payment history and methods"
+            }
+          ]}
+        />
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
