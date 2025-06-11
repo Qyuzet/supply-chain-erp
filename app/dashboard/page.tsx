@@ -15,6 +15,7 @@ import {
   AlertCircle,
   CheckCircle
 } from 'lucide-react';
+import SqlTooltip from '@/components/SqlTooltip';
 import type { User } from '@/lib/auth';
 
 interface DashboardStats {
@@ -359,13 +360,158 @@ export default function DashboardPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Welcome back, {user?.fullName}!
-            </h1>
-            <p className="text-gray-600">
-              Here's what's happening with your {user?.role} account today.
-            </p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Welcome back, {user?.fullName}!
+              </h1>
+              <p className="text-gray-600">
+                Here's what's happening with your {user?.role} account today.
+              </p>
+            </div>
+            <SqlTooltip
+              page={`${user?.role?.charAt(0).toUpperCase()}${user?.role?.slice(1)} Dashboard`}
+              queries={[
+                ...(user?.role === 'customer' ? [
+                  {
+                    title: "Load Customer Orders",
+                    description: "Get customer's order history and statistics",
+                    type: "SELECT" as const,
+                    sql: `-- Get customer profile
+SELECT customerid FROM customers
+WHERE userid = $1;
+
+-- Get customer orders
+SELECT * FROM "Order"
+WHERE customerid = $1
+ORDER BY orderdate DESC;`
+                  },
+                  {
+                    title: "Load Customer Shipments",
+                    description: "Get shipment status for customer orders",
+                    type: "SELECT" as const,
+                    sql: `SELECT s.*
+FROM shipments s
+JOIN "Order" o ON s.orderid = o.orderid
+WHERE o.customerid = $1
+  AND s.status IN ('pending', 'in_transit')
+ORDER BY s.shipmentdate DESC;`
+                  }
+                ] : []),
+                ...(user?.role === 'supplier' ? [
+                  {
+                    title: "Load Supplier Products",
+                    description: "Get supplier's product catalog statistics",
+                    type: "SELECT" as const,
+                    sql: `-- Get supplier profile
+SELECT supplierid FROM supplier
+WHERE userid = $1;
+
+-- Get supplier products
+SELECT * FROM product
+WHERE supplierid = $1
+ORDER BY productname;`
+                  },
+                  {
+                    title: "Supplier Performance Metrics",
+                    description: "Calculate supplier performance statistics",
+                    type: "SELECT" as const,
+                    sql: `SELECT
+  COUNT(po.purchaseorderid) as total_orders,
+  AVG(sp.overallrating) as avg_rating
+FROM supplier s
+LEFT JOIN purchaseorder po ON s.supplierid = po.supplierid
+LEFT JOIN supplierperformance sp ON s.supplierid = sp.supplierid
+WHERE s.userid = $1;`
+                  }
+                ] : []),
+                ...(user?.role === 'warehouse' ? [
+                  {
+                    title: "Load Warehouse Statistics",
+                    description: "Get comprehensive warehouse operational metrics",
+                    type: "SELECT" as const,
+                    sql: `-- Get all orders
+SELECT COUNT(*) as total_orders FROM "Order";
+
+-- Get pending shipments
+SELECT COUNT(*) as pending_shipments
+FROM shipments WHERE status = 'pending';
+
+-- Get low stock items
+SELECT COUNT(*) as low_stock_items
+FROM inventory WHERE quantity < 10;`
+                  },
+                  {
+                    title: "Inventory Analysis",
+                    description: "Analyze inventory levels across all warehouses",
+                    type: "SELECT" as const,
+                    sql: `SELECT
+  w.warehousename,
+  COUNT(i.productid) as total_products,
+  SUM(i.quantity) as total_quantity,
+  COUNT(CASE WHEN i.quantity < 10 THEN 1 END) as low_stock_count
+FROM warehouses w
+LEFT JOIN inventory i ON w.warehouseid = i.warehouseid
+GROUP BY w.warehouseid, w.warehousename;`
+                  }
+                ] : []),
+                ...(user?.role === 'carrier' ? [
+                  {
+                    title: "Load Carrier Shipments",
+                    description: "Get shipment statistics for carrier operations",
+                    type: "SELECT" as const,
+                    sql: `-- Get pending and in-transit shipments
+SELECT COUNT(*) as pending_shipments
+FROM shipments
+WHERE status IN ('pending', 'in_transit');
+
+-- Get completed deliveries
+SELECT COUNT(*) as completed_deliveries
+FROM shipments
+WHERE status = 'delivered';`
+                  },
+                  {
+                    title: "Delivery Performance",
+                    description: "Calculate carrier delivery performance metrics",
+                    type: "SELECT" as const,
+                    sql: `SELECT
+  sc.carriername,
+  COUNT(s.shipmentid) as total_shipments,
+  COUNT(CASE WHEN s.status = 'delivered' THEN 1 END) as completed,
+  (COUNT(CASE WHEN s.status = 'delivered' THEN 1 END) * 100.0 / COUNT(s.shipmentid)) as completion_rate
+FROM shippingcarrier sc
+LEFT JOIN shipments s ON sc.carrierid = s.carrierid
+GROUP BY sc.carrierid, sc.carriername;`
+                  }
+                ] : []),
+                ...(user?.role === 'admin' ? [
+                  {
+                    title: "System Overview Statistics",
+                    description: "Get comprehensive system-wide statistics",
+                    type: "SELECT" as const,
+                    sql: `-- Multiple queries for admin dashboard
+SELECT COUNT(*) as total_orders FROM "Order";
+SELECT COUNT(*) as total_products FROM product;
+SELECT COUNT(*) as total_users FROM users;
+SELECT COUNT(*) as active_users FROM users WHERE isactive = true;
+SELECT COUNT(*) as low_stock_items FROM inventory WHERE quantity < 10;`
+                  },
+                  {
+                    title: "User Distribution Analysis",
+                    description: "Analyze user base across different roles",
+                    type: "SELECT" as const,
+                    sql: `SELECT
+  role,
+  COUNT(*) as user_count,
+  COUNT(CASE WHEN isactive = true THEN 1 END) as active_count,
+  (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM users)) as percentage
+FROM users
+GROUP BY role
+ORDER BY user_count DESC;`
+                  }
+                ] : [])
+              ]}
+            />
           </div>
         </div>
 
