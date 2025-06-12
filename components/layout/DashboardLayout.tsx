@@ -35,11 +35,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         const roleDefaultPages = {
           customer: ['/shop', '/checkout', '/orders', '/returns', '/payments', '/dashboard'],
-          supplier: ['/products', '/purchase-orders', '/factory-requests', '/production', '/payments', '/supplier-performance', '/dashboard'],
+          supplier: ['/products', '/purchase-orders', '/factory-requests', '/payments', '/supplier-performance', '/dashboard'],
           warehouse: ['/warehouse-orders', '/inventory', '/product-warehouse-assignment', '/locations', '/purchase-orders', '/dashboard'],
           carrier: ['/carrier', '/dashboard'],
           factory: ['/factory-production', '/manufacturing', '/quality-control', '/dashboard'],
-          admin: ['/admin', '/orders', '/products', '/inventory', '/product-warehouse-assignment', '/factory-requests', '/warehouses', '/purchase-orders', '/production', '/returns', '/payments', '/supplier-performance', '/carriers', '/carrier', '/reports', '/dashboard', '/shop', '/checkout']
+          admin: ['/admin', '/supply-chain-guide', '/orders', '/products', '/inventory', '/product-warehouse-assignment', '/factory-requests', '/warehouses', '/purchase-orders', '/production', '/returns', '/payments', '/supplier-performance', '/carriers', '/carrier', '/reports', '/dashboard', '/shop', '/checkout']
         };
 
         const allowedPages = roleDefaultPages[userData.role] || ['/dashboard'];

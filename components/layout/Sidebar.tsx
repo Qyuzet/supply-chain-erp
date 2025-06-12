@@ -41,7 +41,6 @@ const roleNavigation = {
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Purchase Orders', href: '/purchase-orders', icon: ShoppingCart },
     { name: 'Factory Requests', href: '/factory-requests', icon: Factory },
-    { name: 'Production', href: '/production', icon: Package },
     { name: 'Payments', href: '/payments', icon: DollarSign },
     { name: 'Performance', href: '/supplier-performance', icon: TrendingUp },
   ],
@@ -66,6 +65,7 @@ const roleNavigation = {
   admin: [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Admin Panel', href: '/admin', icon: Shield },
+    { name: 'Supply Chain Guide', href: '/supply-chain-guide', icon: Package },
     { name: 'Orders', href: '/orders', icon: ShoppingCart },
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Inventory', href: '/inventory', icon: Package2 },

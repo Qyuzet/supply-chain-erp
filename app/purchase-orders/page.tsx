@@ -193,19 +193,16 @@ export default function PurchaseOrdersPage() {
 
         {/* Flow Guidance */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="font-semibold text-blue-900 mb-2">Supply Chain Flow Guide</h3>
+          <h3 className="font-semibold text-blue-900 mb-2">Real-World Purchase Order Flow</h3>
           <div className="text-sm text-blue-800 space-y-1">
-            <p><strong>1. Warehouse</strong> creates Purchase Orders when inventory is low</p>
-            <p><strong>2. Supplier</strong> reviews and approves/rejects Purchase Orders</p>
-            <p><strong>3. Supplier</strong> creates Production Orders for Factory</p>
-            <p><strong>4. Factory</strong> manufactures products and updates inventory</p>
-            <p className="mt-2 font-medium">Current Role: {user?.role} - {
-              user?.role === 'warehouse' ? 'You can create Purchase Orders' :
-              user?.role === 'supplier' ? 'You can approve Purchase Orders and create Production Orders' :
-              user?.role === 'factory' ? 'You can execute Production Orders' :
-              user?.role === 'admin' ? 'You can manage all Purchase Orders' :
-              'You can view Purchase Orders'
-            }</p>
+            <p><strong>1. Warehouse</strong> creates Purchase Orders when inventory is low (requests goods from supplier)</p>
+            <p><strong>2. Supplier</strong> reviews and approves/rejects Purchase Orders (decides if they can fulfill)</p>
+            <p><strong>3. Supplier</strong> requests Factory production (if approved, they need manufacturing)</p>
+            <p><strong>4. Factory</strong> manufactures products → automatically updates warehouse inventory</p>
+            <p><strong>5. Warehouse</strong> pays Supplier for received goods (payment for fulfilled orders)</p>
+            <p className="mt-2 font-medium text-blue-900">
+              Purpose: Purchase Orders are requests from Warehouse to Supplier for goods. Suppliers don't manufacture - they request production from factories.
+            </p>
           </div>
         </div>
 
