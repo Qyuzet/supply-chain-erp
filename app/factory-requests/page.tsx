@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -43,8 +42,6 @@ interface ProductionRequest {
   startdate: string;
   enddate?: string;
   status: string;
-  requestedby: string;
-  notes?: string;
   product: Product;
 }
 
@@ -56,8 +53,7 @@ export default function FactoryRequestsPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
     productid: '',
-    quantity: 0,
-    notes: ''
+    quantity: 0
   });
   const { toast } = useToast();
 
@@ -146,9 +142,7 @@ export default function FactoryRequestsPage() {
           productid: formData.productid,
           quantity: formData.quantity,
           startdate: new Date().toISOString(),
-          status: 'pending',
-          requestedby: user?.role || 'unknown',
-          notes: formData.notes || null
+          status: 'pending'
         });
 
       if (error) throw error;
@@ -158,7 +152,7 @@ export default function FactoryRequestsPage() {
         description: "Production request sent to factory successfully",
       });
 
-      setFormData({ productid: '', quantity: 0, notes: '' });
+      setFormData({ productid: '', quantity: 0 });
       setIsCreating(false);
       await loadRequests();
     } catch (error) {
@@ -256,12 +250,10 @@ ORDER BY pr.startdate ASC;`
   productid,
   quantity,
   startdate,
-  status,
-  requestedby,
-  notes
+  status
 ) VALUES (
   gen_random_uuid(),
-  $1, $2, NOW(), 'pending', $3, $4
+  $1, $2, NOW(), 'pending'
 );`
                 },
                 {
@@ -315,19 +307,11 @@ WHERE productionorderid = $2;`
                     placeholder="Enter quantity to produce"
                   />
                 </div>
-                <div>
-                  <Label>Notes</Label>
-                  <Textarea
-                    value={formData.notes}
-                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                    placeholder="Special instructions or requirements..."
-                    rows={3}
-                  />
-                </div>
+
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => {
                     setIsCreating(false);
-                    setFormData({ productid: '', quantity: 0, notes: '' });
+                    setFormData({ productid: '', quantity: 0 });
                   }}>
                     Cancel
                   </Button>
@@ -355,7 +339,7 @@ WHERE productionorderid = $2;`
                   <TableHead>Requested By</TableHead>
                   <TableHead>Start Date</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Notes</TableHead>
+
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -392,11 +376,7 @@ WHERE productionorderid = $2;`
                         </div>
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {request.notes || 'No notes'}
-                      </span>
-                    </TableCell>
+
                   </TableRow>
                 ))}
               </TableBody>
