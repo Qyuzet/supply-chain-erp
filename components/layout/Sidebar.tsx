@@ -50,7 +50,6 @@ const roleNavigation = {
     { name: 'Orders', href: '/warehouse-orders', icon: ShoppingCart },
     { name: 'Inventory', href: '/inventory', icon: Package },
     { name: 'Product Assignment', href: '/product-warehouse-assignment', icon: Package2 },
-    { name: 'Factory Requests', href: '/factory-requests', icon: Factory },
     { name: 'Locations', href: '/locations', icon: MapPin },
     { name: 'Purchase Orders', href: '/purchase-orders', icon: ShoppingCart },
   ],

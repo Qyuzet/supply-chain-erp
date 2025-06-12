@@ -207,49 +207,60 @@ export default function FactoryProductionPage() {
             .update({ enddate: new Date().toISOString() })
             .eq('productionorderid', productionOrderId);
 
-          // Add produced items to inventory (assuming first warehouse)
-          const { data: warehouse } = await supabase
-            .from('warehouses')
-            .select('warehouseid')
+          // Add produced items to inventory - smart warehouse selection
+          // First, try to find existing inventory for this product
+          const { data: existingInventory } = await supabase
+            .from('inventory')
+            .select('warehouseid, quantity')
+            .eq('productid', production.productid)
+            .order('quantity', { ascending: true }) // Prefer warehouse with lowest stock
             .limit(1)
             .single();
 
-          if (warehouse) {
-            // Check if inventory record exists
-            const { data: existingInventory } = await supabase
+          let targetWarehouseId = null;
+
+          if (existingInventory) {
+            // Use existing warehouse (prefer one with lowest stock)
+            targetWarehouseId = existingInventory.warehouseid;
+
+            // Update existing inventory
+            await supabase
               .from('inventory')
-              .select('quantity')
+              .update({
+                quantity: existingInventory.quantity + production.quantity
+              })
               .eq('productid', production.productid)
-              .eq('warehouseid', warehouse.warehouseid)
+              .eq('warehouseid', targetWarehouseId);
+          } else {
+            // No existing inventory, get the first available warehouse
+            const { data: warehouse } = await supabase
+              .from('warehouses')
+              .select('warehouseid')
+              .limit(1)
               .single();
 
-            if (existingInventory) {
-              // Update existing inventory
-              await supabase
-                .from('inventory')
-                .update({ 
-                  quantity: existingInventory.quantity + production.quantity 
-                })
-                .eq('productid', production.productid)
-                .eq('warehouseid', warehouse.warehouseid);
-            } else {
+            if (warehouse) {
+              targetWarehouseId = warehouse.warehouseid;
+
               // Create new inventory record
               await supabase
                 .from('inventory')
                 .insert({
                   productid: production.productid,
-                  warehouseid: warehouse.warehouseid,
+                  warehouseid: targetWarehouseId,
                   quantity: production.quantity
                 });
             }
+          }
 
-            // Log inventory movement
+          // Log inventory movement if we have a target warehouse
+          if (targetWarehouseId) {
             await supabase
               .from('inventorylog')
               .insert({
                 logid: crypto.randomUUID(),
                 productid: production.productid,
-                warehouseid: warehouse.warehouseid,
+                warehouseid: targetWarehouseId,
                 movementtype: 'in',
                 quantity: production.quantity,
                 referencetype: 'production',
@@ -325,14 +336,14 @@ export default function FactoryProductionPage() {
 
         {/* Production Flow Guidance */}
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <h3 className="font-semibold text-green-900 mb-2">Production Workflow</h3>
+          <h3 className="font-semibold text-green-900 mb-2">Real-World Production Workflow</h3>
           <div className="text-sm text-green-800 space-y-1">
-            <p><strong>Step 1:</strong> Supplier approves Purchase Orders from Warehouse</p>
-            <p><strong>Step 2:</strong> Factory creates Production Orders from approved Purchase Orders</p>
-            <p><strong>Step 3:</strong> Factory starts manufacturing (pending → in_progress → completed)</p>
-            <p><strong>Step 4:</strong> Completed production automatically updates warehouse inventory</p>
+            <p><strong>Step 1:</strong> Suppliers request production from Factory (they own the products)</p>
+            <p><strong>Step 2:</strong> Factory creates Production Orders from supplier requests</p>
+            <p><strong>Step 3:</strong> Factory manufactures products (pending → in_progress → completed)</p>
+            <p><strong>Step 4:</strong> Completed production automatically updates warehouse inventory (smart warehouse selection)</p>
             <p className="mt-2 font-medium text-green-900">
-              As Factory: You receive production requests from suppliers and manufacture products to fulfill orders
+              Real Logic: Only Suppliers can request production because they own the product designs and decide manufacturing schedules
             </p>
           </div>
         </div>
@@ -383,20 +394,34 @@ INSERT INTO productionstatuslog (
 );`
                 },
                 {
-                  title: "Complete Production",
-                  description: "Mark production complete and update inventory",
+                  title: "Complete Production with Smart Inventory",
+                  description: "Mark production complete and update inventory with smart warehouse selection",
                   type: "UPDATE",
                   sql: `-- Update production status
 UPDATE production
 SET status = 'completed',
-    actualcompletiondate = NOW()
-WHERE productionid = $1;
+    enddate = NOW()
+WHERE productionorderid = $1;
 
--- Update warehouse inventory
+-- Smart inventory update (prefer existing warehouse with lowest stock)
 UPDATE inventory
 SET quantity = quantity + $2
 WHERE productid = $3
-  AND warehouseid = $4;`
+  AND warehouseid = (
+    SELECT warehouseid FROM inventory
+    WHERE productid = $3
+    ORDER BY quantity ASC
+    LIMIT 1
+  );
+
+-- Log inventory movement
+INSERT INTO inventorylog (
+  logid, productid, warehouseid, movementtype,
+  quantity, referencetype, referenceid, timestamp
+) VALUES (
+  gen_random_uuid(), $3, $4, 'in',
+  $2, 'production', $1, NOW()
+);`
                 }
               ]}
             />

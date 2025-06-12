@@ -63,7 +63,7 @@ export default function FactoryRequestsPage() {
         const userData = await getCurrentUser();
         setUser(userData);
         
-        if (userData && (userData.role === 'warehouse' || userData.role === 'supplier' || userData.role === 'admin')) {
+        if (userData && (userData.role === 'supplier' || userData.role === 'admin')) {
           await Promise.all([
             loadRequests(),
             loadProducts()
@@ -195,12 +195,12 @@ export default function FactoryRequestsPage() {
     );
   }
 
-  if (!user || !['warehouse', 'supplier', 'admin'].includes(user.role)) {
+  if (!user || !['supplier', 'admin'].includes(user.role)) {
     return (
       <DashboardLayout>
         <div className="text-center py-8">
           <h2 className="text-xl font-semibold text-muted-foreground">Access Denied</h2>
-          <p className="text-muted-foreground">Only Warehouse, Supplier, and Admin can request factory production.</p>
+          <p className="text-muted-foreground">Only Suppliers and Admin can request factory production. Suppliers own the products and decide when to manufacture them.</p>
         </div>
       </DashboardLayout>
     );
@@ -213,7 +213,7 @@ export default function FactoryRequestsPage() {
           primaryTables={['production']}
           relatedTables={['product', 'supplier']}
           operations={['Request Production', 'Track Orders', 'Manage Factory Workflow']}
-          description="Factory production request system. Warehouse and Suppliers can request products to be manufactured by factories."
+          description="Factory production request system. Suppliers request production of their products from factories. Real-world logic: Suppliers own products and decide manufacturing."
         />
 
         {/* Header */}
