@@ -276,7 +276,7 @@ export default function ProductsPage() {
           primaryTables={['product']}
           relatedTables={['supplier', 'inventory', 'orderdetail']}
           operations={['Create Products', 'Manage Catalog', 'Auto-Create Inventory', 'Track Sales']}
-          description="Supplier product catalog with automatic inventory initialization across all warehouses. Products appear in customer shop immediately after creation."
+          description="Supplier product management. Real-world logic: Suppliers own product designs and create products. Admin assigns products to warehouses. Suppliers request factory production but don't manufacture themselves. Products flow: Create → Assign → Shop → Order."
         />
 
       <div className="flex items-center justify-between">

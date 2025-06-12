@@ -331,7 +331,7 @@ export default function FactoryProductionPage() {
           primaryTables={['production']}
           relatedTables={['purchaseorder', 'product', 'inventory', 'productionstatuslog']}
           operations={['Create Production Orders', 'Manage Manufacturing', 'Update Inventory']}
-          description="Factory production management with inventory integration and status tracking"
+          description="Factory manufacturing operations. Real-world flow: Suppliers request production → Factory creates production orders → Factory manufactures → Completed production automatically updates warehouse inventory with smart warehouse selection. Full production status tracking."
         />
 
         {/* Production Flow Guidance */}

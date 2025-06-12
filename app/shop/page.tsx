@@ -242,7 +242,7 @@ export default function ShopPage() {
           primaryTables={['product', 'inventory']}
           relatedTables={['supplier', 'warehouses']}
           operations={['Browse Products', 'Add to Cart', 'Check Stock Levels']}
-          description="Product catalog with real-time inventory from all warehouses. Add items to cart and proceed to checkout for order placement."
+          description="Customer shopping interface. Real-world flow: Suppliers create products → Admin assigns to warehouses → Customers browse and shop → Warehouse fulfills orders. Products show real-time inventory across all warehouse locations."
         />
 
         <JourneyCard
@@ -281,41 +281,45 @@ export default function ShopPage() {
               <p className="text-gray-600">Browse and purchase products</p>
             </div>
             <SqlTooltip
-              page="Shop"
+              page="Shop - Customer Interface"
               queries={[
                 {
-                  title: "Load Products with Inventory",
-                  description: "Fetch all products with supplier info and inventory levels",
+                  title: "Load Products with Real-Time Inventory",
+                  description: "Customer shopping: Products created by Suppliers, assigned to Warehouses by Admin, displayed with live stock levels",
                   type: "SELECT",
-                  sql: `SELECT
+                  sql: `-- Real-world flow: Supplier creates → Admin assigns → Customer shops
+SELECT
   p.productid,
   p.productname,
   p.description,
   p.unitprice,
   s.suppliername,
-  i.quantity,
+  SUM(i.quantity) as total_stock,
   w.warehousename,
   w.location
 FROM product p
 LEFT JOIN supplier s ON p.supplierid = s.supplierid
 LEFT JOIN inventory i ON p.productid = i.productid
 LEFT JOIN warehouses w ON i.warehouseid = w.warehouseid
+GROUP BY p.productid, s.suppliername, w.warehousename, w.location
 ORDER BY p.productname;`
                 },
                 {
-                  title: "Save Cart to LocalStorage",
-                  description: "Store cart data in browser for checkout process",
+                  title: "Customer Cart Management",
+                  description: "Store customer cart data locally before checkout and order creation",
                   type: "INSERT",
-                  sql: `-- JavaScript LocalStorage operation
+                  sql: `-- Customer cart stored locally before order placement
 localStorage.setItem('cart', JSON.stringify(cartData));
 
--- Cart structure:
+-- Cart flows to: Customer shops → Cart → Checkout → Order → Warehouse fulfills
+-- Cart structure for checkout:
 {
   productid: string,
   productname: string,
   unitprice: number,
   quantity: number,
-  maxStock: number
+  maxStock: number,
+  supplier: string
 }`
                 }
               ]}

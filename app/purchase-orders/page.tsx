@@ -214,51 +214,59 @@ export default function PurchaseOrdersPage() {
               <p className="text-gray-600">Manage supplier purchase orders and procurement</p>
             </div>
             <SqlTooltip
-              page="Purchase Orders"
+              page="Purchase Orders - Real-World B2B Flow"
               queries={[
                 {
                   title: "Load Purchase Orders with FIFO",
-                  description: "Get purchase orders with supplier details using FIFO ordering",
+                  description: "Real-world flow: Warehouse creates PO when inventory low → Supplier approves → Supplier fulfills → Warehouse pays",
                   type: "SELECT",
-                  sql: `SELECT
+                  sql: `-- Purchase Orders: Warehouse requests goods from Supplier
+SELECT
   po.*,
   s.suppliername,
   s.contactinfo
 FROM purchaseorder po
 LEFT JOIN supplier s ON po.supplierid = s.supplierid
-ORDER BY po.orderdate ASC; -- FIFO: First In, First Out`
+ORDER BY po.orderdate ASC; -- FIFO: First In, First Out
+
+-- Real flow: Warehouse creates → Supplier approves → Production → Delivery → Payment`
                 },
                 {
-                  title: "Create Purchase Order",
-                  description: "Create new purchase order to supplier",
+                  title: "Create Purchase Order (Warehouse → Supplier)",
+                  description: "Warehouse creates PO to request goods from supplier when inventory is low",
                   type: "INSERT",
-                  sql: `INSERT INTO purchaseorder (
+                  sql: `-- Warehouse creates PO to request goods from Supplier
+INSERT INTO purchaseorder (
   purchaseorderid,
   supplierid,
   orderdate,
-  expecteddeliverydate,
   totalamount,
   status
 ) VALUES (
   gen_random_uuid(),
-  $1, NOW(), $2, $3, 'pending'
-);`
+  $1, NOW(), $2, 'pending' -- Supplier needs to approve
+);
+
+-- Next: Supplier approves → Requests factory production → Delivers to warehouse`
                 },
                 {
-                  title: "Update Purchase Order Status",
-                  description: "Update PO status with history tracking",
+                  title: "Supplier Approves/Rejects Purchase Order",
+                  description: "Supplier decides whether to fulfill warehouse's request for goods",
                   type: "UPDATE",
-                  sql: `UPDATE purchaseorder
-SET status = $1
+                  sql: `-- Supplier approves or rejects warehouse's request
+UPDATE purchaseorder
+SET status = $1 -- 'approved' or 'rejected'
 WHERE purchaseorderid = $2;
 
--- Insert status history
+-- Log approval decision
 INSERT INTO purchaseorderstatushistory (
   purchaseorderid, oldstatus, newstatus,
   changedat, note
 ) VALUES (
-  $2, $3, $1, NOW(), $4
-);`
+  $2, 'pending', $1, NOW(), 'Supplier decision: ' || $1
+);
+
+-- If approved: Supplier requests factory production → Warehouse receives goods → Warehouse pays supplier`
                 }
               ]}
             />

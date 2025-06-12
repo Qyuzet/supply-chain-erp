@@ -224,13 +224,14 @@ export default function FactoryRequestsPage() {
               <p className="text-muted-foreground">Request products to be manufactured by factories</p>
             </div>
             <SqlTooltip
-              page="Factory Production Requests"
+              page="Factory Production Requests - Supplier Interface"
               queries={[
                 {
-                  title: "Load Production Requests",
-                  description: "Get all production requests with product and supplier details",
+                  title: "Load Supplier's Production Requests",
+                  description: "Real-world logic: Only Suppliers request production because they own product designs and decide manufacturing schedules",
                   type: "SELECT",
-                  sql: `SELECT 
+                  sql: `-- Suppliers request production from factories (they own the products)
+SELECT
   pr.*,
   p.productname,
   p.description,
@@ -239,13 +240,17 @@ export default function FactoryRequestsPage() {
 FROM production pr
 JOIN product p ON pr.productid = p.productid
 JOIN supplier s ON p.supplierid = s.supplierid
-ORDER BY pr.startdate ASC;`
+WHERE s.userid = auth.uid() -- Only supplier's own products
+ORDER BY pr.startdate ASC;
+
+-- Real flow: Supplier owns product → Requests factory production → Factory manufactures → Warehouse receives inventory`
                 },
                 {
-                  title: "Create Production Request",
-                  description: "Request factory to manufacture products",
+                  title: "Supplier Requests Factory Production",
+                  description: "Supplier requests their products to be manufactured by factory (they don't manufacture themselves)",
                   type: "INSERT",
-                  sql: `INSERT INTO production (
+                  sql: `-- Supplier requests factory to manufacture their products
+INSERT INTO production (
   productionorderid,
   productid,
   quantity,
@@ -254,17 +259,32 @@ ORDER BY pr.startdate ASC;`
 ) VALUES (
   gen_random_uuid(),
   $1, $2, NOW(), 'pending'
-);`
+);
+
+-- Real logic: Suppliers own product designs but don't manufacture
+-- They request factories to produce their products when needed`
                 },
                 {
-                  title: "Update Production Status",
-                  description: "Factory updates production order status",
+                  title: "Factory Completes Production",
+                  description: "Factory updates status and automatically increases warehouse inventory",
                   type: "UPDATE",
-                  sql: `UPDATE production 
-SET 
-  status = $1,
-  enddate = CASE WHEN $1 = 'completed' THEN NOW() ELSE enddate END
-WHERE productionorderid = $2;`
+                  sql: `-- Factory completes production and updates warehouse inventory
+UPDATE production
+SET
+  status = 'completed',
+  enddate = NOW()
+WHERE productionorderid = $1;
+
+-- Auto-update warehouse inventory (smart warehouse selection)
+UPDATE inventory
+SET quantity = quantity + $2
+WHERE productid = $3
+  AND warehouseid = (
+    SELECT warehouseid FROM inventory
+    WHERE productid = $3
+    ORDER BY quantity ASC
+    LIMIT 1
+  );`
                 }
               ]}
             />

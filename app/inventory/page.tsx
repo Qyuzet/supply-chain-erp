@@ -226,9 +226,9 @@ export default function InventoryPage() {
       <div className="space-y-6">
         <DatabaseIndicator
           primaryTables={['inventory']}
-          relatedTables={['product', 'warehouses']}
+          relatedTables={['product', 'warehouses', 'inventorylog']}
           operations={['Track Stock Levels', 'Adjust Quantities', 'Monitor Alerts']}
-          description="Real-time inventory management with stock level monitoring"
+          description="Warehouse inventory management. Real-world flow: Suppliers create products → Admin assigns to warehouses → Warehouse manages stock → Factory production auto-updates inventory → Warehouse fulfills customer orders. Complete audit trail via inventorylog."
         />
 
 
