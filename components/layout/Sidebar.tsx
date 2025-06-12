@@ -40,6 +40,7 @@ const roleNavigation = {
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Purchase Orders', href: '/purchase-orders', icon: ShoppingCart },
+    { name: 'Production from POs', href: '/production-from-po', icon: Factory },
     { name: 'Factory Requests', href: '/factory-requests', icon: Factory },
     { name: 'Payments', href: '/payments', icon: DollarSign },
     { name: 'Performance', href: '/supplier-performance', icon: TrendingUp },
@@ -51,6 +52,7 @@ const roleNavigation = {
     { name: 'Product Assignment', href: '/product-warehouse-assignment', icon: Package2 },
     { name: 'Locations', href: '/locations', icon: MapPin },
     { name: 'Purchase Orders', href: '/purchase-orders', icon: ShoppingCart },
+    { name: 'Detailed Purchase Orders', href: '/purchase-orders-detailed', icon: ShoppingCart },
   ],
   carrier: [
     { name: 'Dashboard', href: '/dashboard', icon: Home },

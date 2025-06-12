@@ -472,15 +472,54 @@ export const shipmentOperations = {
 
 // Purchase Order Operations
 export const purchaseOrderOperations = {
-  // Create purchase order (Warehouse creates, Supplier receives)
-  createPurchaseOrder: async (supplierId: string, totalAmount: number, createdByWarehouse: string) => {
-    const { data, error } = await supabase
+  // Create detailed purchase order with specific products (Warehouse creates, Supplier receives)
+  createPurchaseOrderWithDetails: async (
+    supplierId: string,
+    orderItems: Array<{productId: string, quantity: number, unitPrice: number}>
+  ) => {
+    const totalAmount = orderItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+
+    // Create purchase order
+    const { data: purchaseOrder, error: poError } = await supabase
       .from('purchaseorder')
       .insert({
         purchaseorderid: crypto.randomUUID(),
         supplierid: supplierId,
         orderdate: new Date().toISOString(),
         status: 'pending', // Supplier needs to approve
+        totalamount: totalAmount
+      })
+      .select()
+      .single();
+
+    if (poError) throw poError;
+
+    // Create purchase order details for each product
+    const orderDetails = orderItems.map(item => ({
+      purchaseorderid: purchaseOrder.purchaseorderid,
+      productid: item.productId,
+      quantity: item.quantity,
+      unitprice: item.unitPrice
+    }));
+
+    const { error: detailsError } = await supabase
+      .from('purchaseorderdetail')
+      .insert(orderDetails);
+
+    if (detailsError) throw detailsError;
+
+    return purchaseOrder;
+  },
+
+  // Legacy method for backward compatibility
+  createPurchaseOrder: async (supplierId: string, totalAmount: number) => {
+    const { data, error } = await supabase
+      .from('purchaseorder')
+      .insert({
+        purchaseorderid: crypto.randomUUID(),
+        supplierid: supplierId,
+        orderdate: new Date().toISOString(),
+        status: 'pending',
         totalamount: totalAmount
       })
       .select()
@@ -548,7 +587,7 @@ export const purchaseOrderOperations = {
       });
   },
 
-  // Get all purchase orders
+  // Get all purchase orders with details
   getAllPurchaseOrders: async () => {
     const { data, error } = await supabase
       .from('purchaseorder')
@@ -557,6 +596,49 @@ export const purchaseOrderOperations = {
         supplier (suppliername)
       `)
       .order('orderdate', { ascending: true }); // FIFO: First In, First Out
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Get purchase order with detailed line items
+  getPurchaseOrderWithDetails: async (purchaseOrderId: string) => {
+    const { data, error } = await supabase
+      .from('purchaseorder')
+      .select(`
+        *,
+        supplier (suppliername),
+        purchaseorderdetail (
+          *,
+          product (productname, description, unitprice)
+        )
+      `)
+      .eq('purchaseorderid', purchaseOrderId)
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Get approved purchase orders ready for production
+  getApprovedPurchaseOrdersForProduction: async (supplierId?: string) => {
+    let query = supabase
+      .from('purchaseorder')
+      .select(`
+        *,
+        supplier (suppliername),
+        purchaseorderdetail (
+          *,
+          product (productname, description, unitprice)
+        )
+      `)
+      .eq('status', 'approved');
+
+    if (supplierId) {
+      query = query.eq('supplierid', supplierId);
+    }
+
+    const { data, error } = await query.order('orderdate', { ascending: true });
 
     if (error) throw error;
     return data;
@@ -638,7 +720,26 @@ export const paymentOperations = {
 
 // Production Operations
 export const productionOperations = {
-  // Create production order
+  // Create production order linked to specific purchase order detail
+  createProductionOrderFromPO: async (purchaseOrderDetailId: string, productId: string, quantity: number) => {
+    const { data, error } = await supabase
+      .from('production')
+      .insert({
+        productionorderid: crypto.randomUUID(),
+        productid: productId,
+        purchaseorderdetailid: purchaseOrderDetailId,
+        quantity,
+        startdate: new Date().toISOString(),
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Legacy method for backward compatibility
   createProductionOrder: async (productId: string, purchaseOrderId: string, quantity: number) => {
     const { data, error } = await supabase
       .from('production')
