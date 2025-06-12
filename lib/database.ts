@@ -472,21 +472,38 @@ export const shipmentOperations = {
 
 // Purchase Order Operations
 export const purchaseOrderOperations = {
-  // Create purchase order
-  createPurchaseOrder: async (supplierId: string, totalAmount: number) => {
+  // Create purchase order (Warehouse creates, Supplier receives)
+  createPurchaseOrder: async (supplierId: string, totalAmount: number, createdByWarehouse: string) => {
     const { data, error } = await supabase
       .from('purchaseorder')
       .insert({
         purchaseorderid: crypto.randomUUID(),
         supplierid: supplierId,
         orderdate: new Date().toISOString(),
-        status: 'pending',
+        status: 'pending', // Supplier needs to approve
         totalamount: totalAmount
       })
       .select()
       .single();
 
     if (error) throw error;
+    return data;
+  },
+
+  // Supplier approves/rejects purchase order
+  updatePurchaseOrderStatus: async (purchaseOrderId: string, status: string, userId: string) => {
+    const { data, error } = await supabase
+      .from('purchaseorder')
+      .update({ status })
+      .eq('purchaseorderid', purchaseOrderId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Log status change
+    await logStatusChange('purchaseorder', purchaseOrderId, null, status, userId, `Purchase order ${status} by supplier`);
+
     return data;
   },
 

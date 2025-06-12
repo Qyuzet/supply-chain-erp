@@ -188,7 +188,7 @@ export default function PurchaseOrdersPage() {
           primaryTables={['purchaseorder']}
           relatedTables={['supplier', 'purchaseorderstatushistory']}
           operations={['Create Purchase Orders', 'Track Status', 'Manage Suppliers']}
-          description="Purchase order management with supplier integration and status tracking"
+          description="Purchase order workflow: Warehouse creates → Supplier approves → Supplier fulfills → Warehouse receives"
         />
 
         {/* Flow Guidance */}

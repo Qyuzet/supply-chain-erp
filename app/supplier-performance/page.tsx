@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import DatabaseIndicator from '@/components/DatabaseIndicator';
 import SqlTooltip from '@/components/SqlTooltip';
+import StarRating from '@/components/StarRating';
 import { 
   TrendingUp, 
   Plus, 
@@ -54,7 +55,7 @@ export default function SupplierPerformancePage() {
   const [formData, setFormData] = useState({
     supplierid: '',
     purchaseorderid: '',
-    rating: '',
+    rating: 0,
     deliverytime: '',
     qualityscore: ''
   });
@@ -140,7 +141,7 @@ export default function SupplierPerformancePage() {
       await supplierPerformanceOperations.createPerformanceEvaluation(
         formData.supplierid,
         formData.purchaseorderid,
-        parseInt(formData.rating),
+        formData.rating,
         formData.deliverytime,
         parseFloat(formData.qualityscore)
       );
@@ -150,7 +151,7 @@ export default function SupplierPerformancePage() {
         description: "Performance evaluation created successfully",
       });
 
-      setFormData({ supplierid: '', purchaseorderid: '', rating: '', deliverytime: '', qualityscore: '' });
+      setFormData({ supplierid: '', purchaseorderid: '', rating: 0, deliverytime: '', qualityscore: '' });
       setIsCreating(false);
       await loadPerformances();
     } catch (error) {
@@ -343,19 +344,18 @@ ORDER BY avg_overall_rating DESC NULLS LAST;`
                   </select>
                 </div>
                 <div>
-                  <Label>Rating (1-5) *</Label>
-                  <select
-                    className="w-full p-2 border rounded-md"
-                    value={formData.rating}
-                    onChange={(e) => setFormData({...formData, rating: e.target.value})}
-                  >
-                    <option value="">Select Rating</option>
-                    <option value="1">1 - Poor</option>
-                    <option value="2">2 - Fair</option>
-                    <option value="3">3 - Good</option>
-                    <option value="4">4 - Very Good</option>
-                    <option value="5">5 - Excellent</option>
-                  </select>
+                  <Label>Rating *</Label>
+                  <div className="mt-2">
+                    <StarRating
+                      rating={formData.rating}
+                      onRatingChange={(rating) => setFormData({...formData, rating})}
+                      size="lg"
+                      showValue={true}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Click stars to rate: 1 = Poor, 2 = Fair, 3 = Good, 4 = Very Good, 5 = Excellent
+                    </p>
+                  </div>
                 </div>
                 <div>
                   <Label>Delivery Time *</Label>
