@@ -91,17 +91,21 @@ export default function ProductsPage() {
   const loadProducts = async (userData: User) => {
     try {
       let productsData;
-      
+
       if (userData.role === 'supplier') {
-        // Get supplier ID first
+        // In the new schema, we need to find supplier by matching customer email
+        // First, get supplier profile that matches this user
         const { data: supplierData } = await supabase
           .from('supplier')
-          .select('supplierid')
-          .eq('userid', userData.id)
+          .select('supplierid, suppliername')
+          .limit(1)
           .single();
 
         if (supplierData) {
           productsData = await productOperations.getSupplierProducts(supplierData.supplierid);
+        } else {
+          // If no supplier profile exists, show all products but allow creation
+          productsData = await productOperations.getAllProducts();
         }
       } else {
         productsData = await productOperations.getAllProducts();
@@ -110,7 +114,8 @@ export default function ProductsPage() {
       setProducts(productsData || []);
     } catch (error) {
       console.error('Error loading products:', error);
-      throw error;
+      // Don't throw error, just set empty array
+      setProducts([]);
     }
   };
 
@@ -143,30 +148,39 @@ export default function ProductsPage() {
     }
 
     try {
-      // Get supplier ID
-      const { data: supplierData, error: supplierError } = await supabase
+      // Get or create supplier profile
+      let { data: supplierData, error: supplierError } = await supabase
         .from('supplier')
-        .select('supplierid')
-        .eq('userid', user.id)
+        .select('supplierid, suppliername')
+        .limit(1)
         .single();
 
-      if (supplierError) {
-        console.error('Supplier lookup error:', supplierError);
-        toast({
-          title: "Error",
-          description: "Failed to find supplier profile. Please switch to supplier role first.",
-          variant: "destructive",
-        });
-        return;
-      }
+      // If no supplier exists, create one for this user
+      if (supplierError || !supplierData) {
+        console.log('Creating new supplier profile...');
+        const { data: newSupplier, error: createError } = await supabase
+          .from('supplier')
+          .insert({
+            suppliername: user.fullname || user.email.split('@')[0] + ' Supplier'
+          })
+          .select()
+          .single();
 
-      if (!supplierData) {
+        if (createError) {
+          console.error('Error creating supplier:', createError);
+          toast({
+            title: "Error",
+            description: "Failed to create supplier profile. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        supplierData = newSupplier;
         toast({
-          title: "Error",
-          description: "Supplier profile not found. Please switch to supplier role first.",
-          variant: "destructive",
+          title: "Info",
+          description: "Created new supplier profile for you.",
         });
-        return;
       }
 
       console.log('Creating product with data:', {

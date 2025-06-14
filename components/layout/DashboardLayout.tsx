@@ -21,42 +21,61 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const userData = await getCurrentUser();
+        console.log('🔍 DashboardLayout - Checking auth...');
+        let userData = await getCurrentUser();
+
+        // Check for test user if no Supabase user
+        if (!userData && typeof window !== 'undefined') {
+          const testUser = localStorage.getItem('test-user');
+          if (testUser) {
+            try {
+              userData = JSON.parse(testUser);
+              console.log('🧪 DashboardLayout - Using test user:', userData?.email);
+            } catch (error) {
+              console.error('Error parsing test user:', error);
+              localStorage.removeItem('test-user');
+            }
+          }
+        }
+
         if (!userData) {
+          console.log('❌ DashboardLayout - No user found, redirecting to auth');
           router.push('/auth');
           return;
         }
+
+        console.log('✅ DashboardLayout - User found:', userData.email, userData.role);
         setUser(userData);
 
-        // Check if user is on appropriate page for their role
+        // Get current path
         const currentPath = window.location.pathname;
         console.log('🔍 DashboardLayout - Current path:', currentPath);
-        console.log('🔍 DashboardLayout - User role:', userData.role);
 
+        // Skip redirect logic for auth-related paths
+        if (currentPath.startsWith('/auth')) {
+          console.log('🔍 DashboardLayout - On auth path, skipping redirect logic');
+          return;
+        }
+
+        // Define allowed pages for each role
         const roleDefaultPages = {
           customer: ['/shop', '/checkout', '/orders', '/returns', '/payments', '/dashboard'],
-          supplier: ['/products', '/purchase-orders', '/production-from-po', '/factory-requests', '/payments', '/supplier-performance', '/dashboard'],
-          warehouse: ['/warehouse-orders', '/inventory', '/product-warehouse-assignment', '/locations', '/purchase-orders', '/purchase-orders-detailed', '/dashboard'],
-          carrier: ['/carrier', '/dashboard'],
-          factory: ['/factory-production', '/manufacturing', '/quality-control', '/dashboard'],
-          admin: ['/admin', '/supply-chain-guide', '/orders', '/products', '/inventory', '/product-warehouse-assignment', '/factory-requests', '/production-from-po', '/purchase-orders-detailed', '/warehouses', '/purchase-orders', '/production', '/returns', '/payments', '/supplier-performance', '/carriers', '/carrier', '/reports', '/dashboard', '/shop', '/checkout']
+          supplier: ['/products', '/purchase-orders', '/production-from-po', '/factory-requests', '/payments', '/supplier-payments', '/supplier-performance', '/supplier-dashboard', '/dashboard'],
+          warehouse: ['/warehouse-orders', '/inventory', '/product-warehouse-assignment', '/warehouse-locations', '/warehouse-purchase-orders', '/purchase-orders-detailed', '/warehouse-dashboard', '/dashboard'],
+          carrier: ['/carrier', '/carrier-dashboard', '/routes', '/carrier-performance', '/dashboard'],
+          factory: ['/factory-production', '/factory-dashboard', '/materials', '/quality-control', '/factory-performance', '/dashboard'],
+          admin: ['/admin', '/supply-chain-guide', '/orders', '/products', '/inventory', '/product-warehouse-assignment', '/factory-requests', '/production-from-po', '/purchase-orders-detailed', '/warehouses', '/purchase-orders', '/production', '/returns', '/payments', '/supplier-performance', '/carriers', '/carrier', '/reports', '/analytics', '/system-settings', '/dashboard', '/shop', '/checkout']
         };
 
         const allowedPages = roleDefaultPages[userData.role] || ['/dashboard'];
         const isOnAllowedPage = allowedPages.some(page => currentPath.startsWith(page));
 
-        console.log('🔍 DashboardLayout - Allowed pages:', allowedPages);
+        console.log('🔍 DashboardLayout - Allowed pages for', userData.role, ':', allowedPages);
         console.log('🔍 DashboardLayout - Is on allowed page:', isOnAllowedPage);
 
-        // If user is not on an allowed page, redirect to their default page
-        if (!isOnAllowedPage && currentPath !== '/') {
+        // Only redirect if user is not on an allowed page and not on root
+        if (!isOnAllowedPage && currentPath !== '/' && currentPath !== '/dashboard') {
           console.log('❌ DashboardLayout - User not on allowed page, redirecting...');
-
-          // TEMPORARY: Disable redirect for checkout debugging
-          if (currentPath === '/checkout') {
-            console.log('🚫 DashboardLayout - Checkout redirect disabled for debugging');
-            return;
-          }
 
           const defaultPages = {
             customer: '/shop',
@@ -70,14 +89,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           const defaultPage = defaultPages[userData.role] || '/dashboard';
           console.log('🔄 DashboardLayout - Redirecting to:', defaultPage);
 
-          setTimeout(() => {
-            router.push(defaultPage);
-          }, 100);
+          // Use replace instead of push to avoid back button issues
+          router.replace(defaultPage);
         } else {
           console.log('✅ DashboardLayout - User on allowed page, no redirect needed');
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
+        console.error('❌ DashboardLayout - Auth check failed:', error);
         router.push('/auth');
       } finally {
         setLoading(false);

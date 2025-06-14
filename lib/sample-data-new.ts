@@ -34,6 +34,7 @@ export const createSampleData = async () => {
       .from('customers')
       .insert({
         email: 'supplier@example.com',
+        fullname: 'Sample Supplier',
         customername: 'Sample Supplier Co.',
         role: 'supplier',
         phone: '+1-555-0001',
@@ -133,6 +134,7 @@ export const createSampleData = async () => {
       .from('customers')
       .insert({
         email: 'customer@example.com',
+        fullname: 'Sample Customer',
         customername: 'Sample Customer',
         role: 'customer',
         phone: '+1-555-0123',
@@ -152,6 +154,7 @@ export const createSampleData = async () => {
       .from('customers')
       .insert({
         email: 'warehouse@example.com',
+        fullname: 'Warehouse Manager',
         customername: 'Warehouse Manager',
         role: 'warehouse',
         phone: '+1-555-0002',
@@ -171,6 +174,7 @@ export const createSampleData = async () => {
       .from('customers')
       .insert({
         email: 'carrier@example.com',
+        fullname: 'Delivery Driver',
         customername: 'Delivery Driver',
         role: 'carrier',
         phone: '+1-555-0003',

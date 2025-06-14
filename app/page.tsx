@@ -2,56 +2,61 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  ArrowRight, 
-  Package, 
-  Truck, 
-  BarChart3, 
-  Users, 
-  Shield, 
+import {
+  ArrowRight,
+  Package,
+  Truck,
+  BarChart3,
+  Users,
+  Shield,
   Database,
   CheckCircle,
   Building,
   ShoppingCart
 } from 'lucide-react';
+import { getCurrentUser } from '@/lib/auth';
 
 export default function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [justLoggedOut, setJustLoggedOut] = useState(false);
   const router = useRouter();
-  const { data: session, status } = useSession();
 
   useEffect(() => {
-    // Wait for NextAuth session to load
-    if (status === 'loading') {
-      return;
-    }
+    const checkAuth = async () => {
+      try {
+        // Check if user just logged out first
+        const justLoggedOutFlag = sessionStorage.getItem('justLoggedOut') === 'true';
 
-    // Check if user just logged out first
-    const justLoggedOutFlag = sessionStorage.getItem('justLoggedOut') === 'true';
+        if (justLoggedOutFlag) {
+          // User just logged out, show them the landing page
+          setJustLoggedOut(true);
+          sessionStorage.removeItem('justLoggedOut');
+          setLoading(false);
+          return;
+        }
 
-    if (justLoggedOutFlag) {
-      // User just logged out, show them the landing page
-      setJustLoggedOut(true);
-      sessionStorage.removeItem('justLoggedOut');
-      setLoading(false);
-      return;
-    }
+        // Check Supabase Auth session
+        const user = await getCurrentUser();
+        if (user) {
+          // User has active session, redirect to dashboard
+          console.log('User found on home page, redirecting to dashboard');
+          router.push('/dashboard');
+          return;
+        }
 
-    // Check NextAuth session
-    if (session?.user && status === 'authenticated') {
-      // User has active session, redirect to dashboard
-      router.push('/dashboard');
-      return;
-    }
+        // No session, stay on landing page
+        setLoading(false);
+      } catch (error) {
+        console.error('Auth check error on home page:', error);
+        setLoading(false);
+      }
+    };
 
-    // No session or unauthenticated, stay on landing page
-    setLoading(false);
-  }, [router, session, status]);
+    checkAuth();
+  }, [router]);
 
   if (loading) {
     return (

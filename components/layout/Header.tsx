@@ -33,7 +33,21 @@ export default function Header({ user: propUser }: HeaderProps) {
     } else {
       const loadUser = async () => {
         try {
-          const userData = await getCurrentUser();
+          let userData = await getCurrentUser();
+
+          // Check for test user if no Supabase user
+          if (!userData && typeof window !== 'undefined') {
+            const testUser = localStorage.getItem('test-user');
+            if (testUser) {
+              try {
+                userData = JSON.parse(testUser);
+              } catch (error) {
+                console.error('Error parsing test user:', error);
+                localStorage.removeItem('test-user');
+              }
+            }
+          }
+
           setUser(userData);
         } catch (error) {
           console.error('Error loading user:', error);
@@ -46,32 +60,26 @@ export default function Header({ user: propUser }: HeaderProps) {
 
   const handleSignOut = async () => {
     try {
-      // Set flag to indicate user just logged out
-      sessionStorage.setItem('justLoggedOut', 'true');
+      // Clear test user if exists
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('test-user');
+      }
 
-      // Import NextAuth signOut directly
-      const { signOut: nextAuthSignOut } = await import('next-auth/react');
-
-      // Sign out without redirect
-      await nextAuthSignOut({
-        redirect: false,
-        callbackUrl: '/'
-      });
+      // Sign out from Supabase
+      await signOut();
 
       toast({
         title: "Success",
         description: "Signed out successfully",
       });
 
-      // Force redirect to landing page
-      window.location.href = '/';
+      // Redirect to auth page
+      router.push('/auth');
 
     } catch (error: any) {
-      // Remove the flag if logout failed
-      sessionStorage.removeItem('justLoggedOut');
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || 'Sign out failed',
         variant: "destructive",
       });
     }
@@ -121,15 +129,15 @@ export default function Header({ user: propUser }: HeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar className="h-10 w-10">
-                <AvatarImage src="" alt={user?.fullName} />
-                <AvatarFallback>{getInitials(user?.fullName)}</AvatarFallback>
+                <AvatarImage src="" alt={user?.fullname} />
+                <AvatarFallback>{getInitials(user?.fullname)}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{user?.fullName}</p>
+                <p className="text-sm font-medium leading-none">{user?.fullname}</p>
                 <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                 <div className="mt-2">
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(user?.role || '')}`}>

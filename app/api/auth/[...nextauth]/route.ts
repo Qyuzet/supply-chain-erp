@@ -94,7 +94,7 @@ const handler = NextAuth({
           // Fallback values
           token.role = 'customer';
           token.userId = user.id;
-          token.fullName = user.name;
+          token.fullName = user.name || '';
           token.isActive = true;
         }
       }

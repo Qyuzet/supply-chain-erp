@@ -100,7 +100,7 @@ export default function ReturnsPage() {
   const loadOrders = async () => {
     try {
       const { data, error } = await supabase
-        .from('Order')
+        .from('orders') // Updated table name
         .select(`
           orderid,
           orderdate,
@@ -111,7 +111,7 @@ export default function ReturnsPage() {
             product(productname, unitprice)
           )
         `)
-        .eq('status', 'delivered')
+        .eq('orderstatus', 'delivered') // Updated field name
         .order('orderdate', { ascending: true }); // FIFO: First In, First Out
 
       if (error) throw error;

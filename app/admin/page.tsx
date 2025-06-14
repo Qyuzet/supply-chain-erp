@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { getCurrentUser } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { createSampleData } from '@/lib/sample-data';
+import { testNewSchema } from '@/test-new-schema';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,9 +50,9 @@ import SqlTooltip from '@/components/SqlTooltip';
 import type { User } from '@/lib/auth';
 
 interface SystemUser {
-  userid: string;
+  customerid: string; // Updated field name
   email: string;
-  fullname: string;
+  customername: string; // This is the main name field
   role: string;
   isactive: boolean;
   createdat: string;
@@ -83,9 +84,11 @@ export default function AdminPage() {
   const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null);
   const [userForm, setUserForm] = useState({
     email: '',
-    fullname: '',
+    customername: '', // Changed from fullname to customername
     role: 'customer'
   });
+  const [isTestingSchema, setIsTestingSchema] = useState(false);
+  const [testResults, setTestResults] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -118,7 +121,7 @@ export default function AdminPage() {
   const loadUsers = async () => {
     try {
       const { data, error } = await supabase
-        .from('users')
+        .from('customers') // Updated table name
         .select('*')
         .order('createdat', { ascending: false });
 
@@ -138,8 +141,8 @@ export default function AdminPage() {
         { data: products },
         { data: shipments }
       ] = await Promise.all([
-        supabase.from('users').select('*'),
-        supabase.from('Order').select('*'),
+        supabase.from('customers').select('*'), // Updated table name
+        supabase.from('orders').select('*'), // Updated table name
         supabase.from('product').select('*'),
         supabase.from('shipments').select('*')
       ]);
@@ -150,7 +153,7 @@ export default function AdminPage() {
         totalProducts: products?.length || 0,
         totalShipments: shipments?.length || 0,
         activeUsers: users?.filter(u => u.isactive).length || 0,
-        pendingOrders: orders?.filter(o => o.status === 'pending').length || 0
+        pendingOrders: orders?.filter(o => o.orderstatus === 'pending').length || 0 // Updated field name
       });
     } catch (error) {
       console.error('Error loading system stats:', error);
@@ -167,10 +170,10 @@ export default function AdminPage() {
       return;
     }
 
-    if (!userForm.fullname.trim()) {
+    if (!userForm.customername.trim()) {
       toast({
         title: "Error",
-        description: "Full name is required",
+        description: "Customer name is required",
         variant: "destructive",
       });
       return;
@@ -179,56 +182,51 @@ export default function AdminPage() {
     try {
       console.log('Creating user with data:', {
         email: userForm.email,
-        fullname: userForm.fullname,
+        customername: userForm.customername,
         role: userForm.role,
         isactive: true
       });
 
-      // First insert the user
-      const { error: insertError } = await supabase
-        .from('users')
+      // Create user directly in customers table (unified user management)
+      const { data: newUser, error: insertError } = await supabase
+        .from('customers')
         .insert({
           email: userForm.email,
-          fullname: userForm.fullname,
+          customername: userForm.customername,
           role: userForm.role,
+          phone: '+1 (555) 000-0000',
+          address: '123 Main St, City, State 12345',
           isactive: true
-        });
+        })
+        .select()
+        .single();
 
       if (insertError) throw insertError;
 
-      // Then get the user back
-      const { data: newUser, error: selectError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', userForm.email)
-        .single();
-
-      if (selectError) throw selectError;
-
       console.log('User created successfully:', newUser);
 
-      // Create role-specific profile
-      if (userForm.role === 'customer') {
-        await supabase
-          .from('customers')
-          .insert({
-            userid: newUser.userid,
-            customername: userForm.fullname,
-            phone: '+1 (555) 000-0000',
-            address: '123 Main St, City, State 12345'
-          });
-      } else if (userForm.role === 'supplier') {
+      // Create role-specific profile if needed
+      if (userForm.role === 'supplier') {
         await supabase
           .from('supplier')
           .insert({
-            userid: newUser.userid,
-            suppliername: userForm.fullname
+            userid: newUser.customerid,
+            suppliername: userForm.customername
           });
       } else if (userForm.role === 'carrier') {
         await supabase
           .from('shippingcarrier')
           .insert({
-            carriername: userForm.fullname
+            userid: newUser.customerid,
+            carriername: userForm.customername
+          });
+      } else if (userForm.role === 'warehouse') {
+        await supabase
+          .from('warehouses')
+          .insert({
+            userid: newUser.customerid,
+            warehousename: `${userForm.customername} Warehouse`,
+            location: 'Default Location'
           });
       }
 
@@ -238,7 +236,7 @@ export default function AdminPage() {
       });
 
       await loadUsers();
-      setUserForm({ email: '', fullname: '', role: 'customer' });
+      setUserForm({ email: '', customername: '', role: 'customer' });
       setIsCreatingUser(false);
     } catch (error) {
       console.error('Error creating user:', error);
@@ -255,13 +253,13 @@ export default function AdminPage() {
 
     try {
       const { error } = await supabase
-        .from('users')
+        .from('customers') // Updated table name
         .update({
-          fullname: userForm.fullname,
+          customername: userForm.customername,
           role: userForm.role,
           isactive: selectedUser.isactive
         })
-        .eq('userid', selectedUser.userid);
+        .eq('customerid', selectedUser.customerid); // Updated field name
 
       if (error) throw error;
 
@@ -286,9 +284,9 @@ export default function AdminPage() {
   const handleToggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
-        .from('users')
+        .from('customers') // Updated table name
         .update({ isactive: !currentStatus })
-        .eq('userid', userId);
+        .eq('customerid', userId); // Updated field name
 
       if (error) throw error;
 
@@ -311,7 +309,7 @@ export default function AdminPage() {
   const handleCreateSampleData = async () => {
     try {
       const result = await createSampleData();
-      
+
       if (result?.success) {
         toast({
           title: "Success",
@@ -331,11 +329,37 @@ export default function AdminPage() {
     }
   };
 
+  const handleTestSchema = async () => {
+    setIsTestingSchema(true);
+    try {
+      const results = await testNewSchema();
+      setTestResults(results);
+
+      const passedTests = Object.values(results).filter(v => v === true).length;
+      const totalTests = 7; // Total number of tests
+
+      toast({
+        title: passedTests === totalTests ? "All Tests Passed!" : "Some Tests Failed",
+        description: `${passedTests}/${totalTests} tests passed. Check console for details.`,
+        variant: passedTests === totalTests ? "default" : "destructive",
+      });
+    } catch (error) {
+      console.error('Error testing schema:', error);
+      toast({
+        title: "Test Error",
+        description: "Failed to run schema tests",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTestingSchema(false);
+    }
+  };
+
   const openEditDialog = (user: SystemUser) => {
     setSelectedUser(user);
     setUserForm({
       email: user.email,
-      fullname: user.fullname,
+      customername: user.customername,
       role: user.role
     });
     setIsEditingUser(true);
@@ -380,10 +404,10 @@ export default function AdminPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <DatabaseIndicator
-          primaryTables={['users']}
-          relatedTables={['customers', 'supplier', 'order', 'product']}
+          primaryTables={['customers']}
+          relatedTables={['supplier', 'warehouses', 'shippingcarrier', 'orders', 'product']}
           operations={['Create Users', 'Manage Roles', 'System Stats', 'Generate Sample Data']}
-          description="System administration with user management and role-based profile creation"
+          description="System administration with unified user management in customers table and role-based profile creation"
         />
 
 
@@ -460,6 +484,18 @@ WHERE userid = $2;`
               <Database className="w-4 h-4 mr-2" />
               Create Sample Data
             </Button>
+            <Button
+              onClick={handleTestSchema}
+              variant="outline"
+              disabled={isTestingSchema}
+            >
+              {isTestingSchema ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+              ) : (
+                <Shield className="w-4 h-4 mr-2" />
+              )}
+              {isTestingSchema ? 'Testing...' : 'Test Schema'}
+            </Button>
             <Dialog open={isCreatingUser} onOpenChange={setIsCreatingUser}>
               <DialogTrigger asChild>
                 <Button>
@@ -485,10 +521,10 @@ WHERE userid = $2;`
                     />
                   </div>
                   <div>
-                    <Label>Full Name</Label>
+                    <Label>Customer Name</Label>
                     <Input
-                      value={userForm.fullname}
-                      onChange={(e) => setUserForm({...userForm, fullname: e.target.value})}
+                      value={userForm.customername}
+                      onChange={(e) => setUserForm({...userForm, customername: e.target.value})}
                       placeholder="John Doe"
                     />
                   </div>
@@ -594,11 +630,11 @@ WHERE userid = $2;`
               </TableHeader>
               <TableBody>
                 {users.map((user) => (
-                  <TableRow key={user.userid}>
+                  <TableRow key={user.customerid}>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{user.fullname}</p>
-                        <p className="text-sm text-gray-600">{user.userid.slice(0, 8)}...</p>
+                        <p className="font-medium">{user.customername}</p>
+                        <p className="text-sm text-gray-600">{user.customerid.slice(0, 8)}...</p>
                       </div>
                     </TableCell>
                     <TableCell>{user.email}</TableCell>
@@ -627,7 +663,7 @@ WHERE userid = $2;`
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleToggleUserStatus(user.userid, user.isactive)}
+                          onClick={() => handleToggleUserStatus(user.customerid, user.isactive)}
                         >
                           {user.isactive ? 'Deactivate' : 'Activate'}
                         </Button>
@@ -660,10 +696,10 @@ WHERE userid = $2;`
                 />
               </div>
               <div>
-                <Label>Full Name</Label>
+                <Label>Customer Name</Label>
                 <Input
-                  value={userForm.fullname}
-                  onChange={(e) => setUserForm({...userForm, fullname: e.target.value})}
+                  value={userForm.customername}
+                  onChange={(e) => setUserForm({...userForm, customername: e.target.value})}
                 />
               </div>
               <div>

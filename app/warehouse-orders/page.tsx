@@ -29,7 +29,7 @@ import type { User } from '@/lib/auth';
 interface OrderWithDetails {
   orderid: string;
   orderdate: string;
-  status: string;
+  orderstatus: string; // Fixed field name
   customers: {
     customername: string;
     address: string;
@@ -86,11 +86,11 @@ export default function WarehouseOrdersPage() {
   const loadOrders = async () => {
     try {
       const { data, error } = await supabase
-        .from('Order')
+        .from('orders') // Updated table name
         .select(`
           orderid,
           orderdate,
-          status,
+          orderstatus,
           customers(customername, address, phone),
           orderdetail(
             productid,
@@ -98,7 +98,7 @@ export default function WarehouseOrdersPage() {
             product(productname, unitprice)
           )
         `)
-        .in('status', ['pending', 'confirmed', 'shipped'])
+        .in('orderstatus', ['pending', 'confirmed', 'ready_for_pickup']) // Fixed: Include ready_for_pickup status
         .order('orderdate', { ascending: true }); // FIFO: First In, First Out
 
       if (error) throw error;
@@ -194,10 +194,10 @@ export default function WarehouseOrdersPage() {
       }
 
       console.log('Updating order status to confirmed...');
-      // Update order status
+      // Update order status (updated table name and field name)
       const { data: updateResult, error: orderError } = await supabase
-        .from('Order')
-        .update({ status: 'confirmed' })
+        .from('orders') // Updated table name
+        .update({ orderstatus: 'confirmed' }) // Updated field name
         .eq('orderid', order.orderid)
         .select();
 
@@ -324,10 +324,10 @@ export default function WarehouseOrdersPage() {
       console.log('Found/created shipment for order');
       console.log('Updating order status to shipped...');
 
-      // Update order status to ready for pickup
+      // Update order status to ready for pickup (updated table name and field name)
       const { error: updateError } = await supabase
-        .from('Order')
-        .update({ status: 'shipped' })
+        .from('orders') // Updated table name
+        .update({ orderstatus: 'ready_for_pickup' }) // Fixed: Should be ready_for_pickup, not shipped
         .eq('orderid', order.orderid);
 
       if (updateError) {
@@ -343,7 +343,7 @@ export default function WarehouseOrdersPage() {
           historyid: crypto.randomUUID(),
           orderid: order.orderid,
           oldstatus: 'confirmed',
-          newstatus: 'shipped',
+          newstatus: 'ready_for_pickup',
           changedat: new Date().toISOString(),
           changedbyuserid: user?.id || null,
           note: 'Order packed and ready for carrier pickup'
@@ -378,6 +378,7 @@ export default function WarehouseOrdersPage() {
     const colors = {
       pending: 'bg-yellow-100 text-yellow-800',
       confirmed: 'bg-blue-100 text-blue-800',
+      ready_for_pickup: 'bg-purple-100 text-purple-800',
       shipped: 'bg-green-100 text-green-800',
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
@@ -399,15 +400,15 @@ export default function WarehouseOrdersPage() {
     );
   }
 
-  const pendingOrders = orders.filter(o => o.status === 'pending');
-  const confirmedOrders = orders.filter(o => o.status === 'confirmed');
-  const shippedOrders = orders.filter(o => o.status === 'shipped');
+  const pendingOrders = orders.filter(o => o.orderstatus === 'pending');
+  const confirmedOrders = orders.filter(o => o.orderstatus === 'confirmed');
+  const readyForPickupOrders = orders.filter(o => o.orderstatus === 'ready_for_pickup');
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <DatabaseIndicator
-          primaryTables={['Order', 'orderdetail']}
+          primaryTables={['orders', 'orderdetail']}
           relatedTables={['inventory', 'product', 'shipments', 'shippingcarrier']}
           operations={['Process FIFO Orders', 'Check Inventory', 'Assign Carriers', 'Update Status']}
           description="FIFO order processing: pending → ready to pickup → shipped → delivered. Automatic inventory checks and carrier assignment for efficient fulfillment."
@@ -573,7 +574,7 @@ INSERT INTO orderstatushistory (
               <Truck className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{shippedOrders.length}</div>
+              <div className="text-2xl font-bold">{readyForPickupOrders.length}</div>
               <p className="text-xs text-muted-foreground">awaiting carrier</p>
             </CardContent>
           </Card>
@@ -630,8 +631,8 @@ INSERT INTO orderstatushistory (
                       ${calculateOrderTotal(order.orderdetail).toFixed(2)}
                     </TableCell>
                     <TableCell>
-                      <Badge className={getStatusColor(order.status)}>
-                        {order.status}
+                      <Badge className={getStatusColor(order.orderstatus)}>
+                        {order.orderstatus}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -658,7 +659,7 @@ INSERT INTO orderstatushistory (
                                   <div>
                                     <h4 className="font-medium">Order Info</h4>
                                     <p className="text-sm">Date: {new Date(selectedOrder.orderdate).toLocaleDateString()}</p>
-                                    <p className="text-sm">Status: {selectedOrder.status}</p>
+                                    <p className="text-sm">Status: {selectedOrder.orderstatus}</p>
                                     <p className="text-sm">Total: ${calculateOrderTotal(selectedOrder.orderdetail).toFixed(2)}</p>
                                   </div>
                                 </div>
@@ -691,7 +692,7 @@ INSERT INTO orderstatushistory (
                           </DialogContent>
                         </Dialog>
 
-                        {order.status === 'pending' && (
+                        {order.orderstatus === 'pending' && (
                           <Button
                             size="sm"
                             onClick={() => confirmOrder(order)}
@@ -706,7 +707,7 @@ INSERT INTO orderstatushistory (
                           </Button>
                         )}
 
-                        {order.status === 'confirmed' && (
+                        {order.orderstatus === 'confirmed' && (
                           <Button
                             size="sm"
                             onClick={() => markReadyForPickup(order)}

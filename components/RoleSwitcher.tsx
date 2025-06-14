@@ -43,23 +43,8 @@ const createRoleProfile = async (userId: string, role: UserRole, email: string, 
   try {
     switch (role) {
       case 'customer':
-        const { data: existingCustomer } = await supabase
-          .from('customers')
-          .select('customerid')
-          .eq('userid', userId)
-          .single();
-
-        if (!existingCustomer) {
-          const { error } = await supabase
-            .from('customers')
-            .insert({
-              userid: userId,
-              customername: name || 'Customer User',
-              phone: '+1 (555) 000-0000',
-              address: '123 Main St, City, State 12345'
-            });
-          if (error) console.error('Error creating customer profile:', error);
-        }
+        // Customer profile is already in customers table, no need to create separate profile
+        console.log('Customer role selected - using existing customers table entry');
         break;
 
       case 'supplier':
@@ -81,54 +66,23 @@ const createRoleProfile = async (userId: string, role: UserRole, email: string, 
         break;
 
       case 'warehouse':
+        // Check if user has warehouse association
         const { data: existingWarehouse } = await supabase
-          .from('warehousestaff')
-          .select('staffid')
+          .from('warehouses')
+          .select('warehouseid')
           .eq('userid', userId)
           .single();
 
         if (!existingWarehouse) {
-          // Get a default warehouse or create one
-          let { data: warehouse } = await supabase
-            .from('warehouses')
-            .select('warehouseid')
-            .limit(1)
-            .single();
-
-          if (!warehouse) {
-            // Create a default warehouse
-            // First create the warehouse
-            const { error: warehouseError } = await supabase
-              .from('warehouses')
-              .insert({
-                warehousename: 'Main Warehouse',
-                location: '789 Storage Blvd, City, State 12345'
-              });
-
-            if (warehouseError) throw warehouseError;
-
-            // Then get the warehouse back
-            const { data: newWarehouse, error: selectError } = await supabase
-              .from('warehouses')
-              .select('warehouseid')
-              .eq('warehousename', 'Main Warehouse')
-              .single();
-
-            if (selectError) {
-              console.error('Error selecting warehouse:', selectError);
-              return;
-            }
-            warehouse = newWarehouse;
-          }
-
+          // Create or assign a warehouse to this user
           const { error } = await supabase
-            .from('warehousestaff')
+            .from('warehouses')
             .insert({
               userid: userId,
-              warehouseid: warehouse.warehouseid,
-              staffname: name || 'Warehouse Staff'
+              warehousename: `${name || 'User'} Warehouse`,
+              location: '789 Storage Blvd, City, State 12345'
             });
-          if (error) console.error('Error creating warehouse staff profile:', error);
+          if (error) console.error('Error creating warehouse profile:', error);
         }
         break;
 
@@ -179,16 +133,38 @@ export default function RoleSwitcher({ user, onRoleChange }: RoleSwitcherProps) 
 
     setIsUpdating(true);
     try {
-      // Update user role in database
-      const { error: userError } = await supabase
-        .from('users')
-        .update({ role: selectedRole })
-        .eq('userid', user.id);
+      console.log('🔄 Role Switch - Updating role from', user.role, 'to', selectedRole);
+      console.log('🔄 Role Switch - User ID:', user.id);
 
-      if (userError) throw userError;
+      // Update user role in customers table (unified user management)
+      const { error: userError } = await supabase
+        .from('customers')
+        .update({ role: selectedRole })
+        .eq('customerid', user.id);
+
+      if (userError) {
+        console.error('❌ Role Switch - Database update error:', userError);
+        throw userError;
+      }
+
+      console.log('✅ Role Switch - Database updated successfully');
+
+      // Update test user in localStorage if exists
+      if (typeof window !== 'undefined') {
+        const testUser = localStorage.getItem('test-user');
+        if (testUser) {
+          try {
+            const parsedUser = JSON.parse(testUser);
+            parsedUser.role = selectedRole;
+            localStorage.setItem('test-user', JSON.stringify(parsedUser));
+          } catch (error) {
+            console.error('Error updating test user:', error);
+          }
+        }
+      }
 
       // Create role-specific profile if needed
-      await createRoleProfile(user.id, selectedRole, user.email, user.fullName || user.email);
+      await createRoleProfile(user.id, selectedRole, user.email, user.fullname || user.email);
 
       toast({
         title: "Role Changed Successfully",

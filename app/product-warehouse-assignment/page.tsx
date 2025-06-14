@@ -161,10 +161,10 @@ export default function ProductWarehouseAssignmentPage() {
     }
 
     try {
-      // Check if assignment already exists
+      // Check if assignment already exists - FIXED for composite key
       const { data: existing } = await supabase
         .from('inventory')
-        .select('inventoryid')
+        .select('productid, warehouseid')
         .eq('productid', formData.productid)
         .eq('warehouseid', formData.warehouseid)
         .single();
@@ -221,12 +221,14 @@ export default function ProductWarehouseAssignmentPage() {
     }
   };
 
-  const handleRemoveAssignment = async (inventoryId: string) => {
+  const handleRemoveAssignment = async (productId: string, warehouseId: string) => {
     try {
+      // FIXED: Use composite key for deletion
       const { error } = await supabase
         .from('inventory')
         .delete()
-        .eq('inventoryid', inventoryId);
+        .eq('productid', productId)
+        .eq('warehouseid', warehouseId);
 
       if (error) throw error;
 

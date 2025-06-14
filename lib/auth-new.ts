@@ -3,7 +3,7 @@ import { supabase } from './supabase';
 export interface User {
   id: string;
   email: string;
-  fullname: string; // This will be derived from customername
+  fullname: string;
   role: string;
   customername?: string;
   phone?: string;
@@ -16,7 +16,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
   try {
     // Get current session from Supabase Auth
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
+    
     if (sessionError) {
       console.error('Session error:', sessionError);
       return null;
@@ -35,35 +35,8 @@ export const getCurrentUser = async (): Promise<User | null> => {
       .single();
 
     if (userError) {
-      // If user doesn't exist in customers table, create them
-      if (userError.code === 'PGRST116') { // No rows returned
-        console.log('User not found in customers table, creating profile...');
-
-        try {
-          const newUserData = await createUserProfile(
-            session.user.email!,
-            session.user.user_metadata?.full_name || session.user.email!.split('@')[0],
-            'customer'
-          );
-
-          return {
-            id: newUserData.customerid,
-            email: newUserData.email,
-            fullname: newUserData.customername, // Use customername as fullname
-            role: newUserData.role,
-            customername: newUserData.customername,
-            phone: newUserData.phone,
-            address: newUserData.address,
-            isactive: newUserData.isactive
-          };
-        } catch (createError) {
-          console.error('Error creating user profile:', createError);
-          return null;
-        }
-      } else {
-        console.error('User data error:', userError);
-        return null;
-      }
+      console.error('User data error:', userError);
+      return null;
     }
 
     if (!userData) {
@@ -75,7 +48,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
     return {
       id: userData.customerid,
       email: userData.email,
-      fullname: userData.customername, // Use customername as fullname
+      fullname: userData.fullname || userData.customername,
       role: userData.role,
       customername: userData.customername,
       phone: userData.phone,
@@ -166,11 +139,7 @@ export const signInWithGoogle = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        }
+        redirectTo: `${window.location.origin}/auth/callback`
       }
     });
 
@@ -193,7 +162,8 @@ export const createUserProfile = async (
       .from('customers')
       .insert({
         email,
-        customername: fullname, // Use customername instead of fullname
+        fullname,
+        customername: fullname,
         role,
         phone: '+1 (555) 000-0000',
         address: '123 Main St, City, State 12345',
@@ -263,60 +233,4 @@ export const updateUserRole = async (userId: string, newRole: string) => {
     console.error('Error updating user role:', error);
     throw error;
   }
-};
-
-// Temporary function for testing without OAuth
-export const createTestSession = async (email: string = 'admin@example.com') => {
-  try {
-    // Check if user exists
-    const { data: existingUser } = await supabase
-      .from('customers')
-      .select('*')
-      .eq('email', email)
-      .single();
-
-    if (existingUser) {
-      // Store user info in localStorage for testing
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('test-user', JSON.stringify({
-          id: existingUser.customerid,
-          email: existingUser.email,
-          fullname: existingUser.customername,
-          role: existingUser.role,
-          customername: existingUser.customername,
-          phone: existingUser.phone,
-          address: existingUser.address,
-          isactive: existingUser.isactive
-        }));
-      }
-      return existingUser;
-    } else {
-      throw new Error('Test user not found');
-    }
-  } catch (error) {
-    console.error('Error creating test session:', error);
-    throw error;
-  }
-};
-
-// Modified getCurrentUser to check for test session
-export const getCurrentUserWithTest = async (): Promise<User | null> => {
-  // First try normal Supabase auth
-  const normalUser = await getCurrentUser();
-  if (normalUser) return normalUser;
-
-  // If no Supabase session, check for test session
-  if (typeof window !== 'undefined') {
-    const testUser = localStorage.getItem('test-user');
-    if (testUser) {
-      try {
-        return JSON.parse(testUser);
-      } catch (error) {
-        console.error('Error parsing test user:', error);
-        localStorage.removeItem('test-user');
-      }
-    }
-  }
-
-  return null;
 };

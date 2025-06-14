@@ -175,25 +175,8 @@ export default function CheckoutPage() {
       console.log('=== STARTING ORDER CREATION ===');
       console.log('User:', user);
 
-      // Get customer ID
-      console.log('Getting customer data for user ID:', user.id);
-      const { data: customerData, error: customerError } = await supabase
-        .from('customers')
-        .select('customerid')
-        .eq('userid', user.id)
-        .single();
-
-      if (customerError) {
-        console.error('Customer lookup error:', customerError);
-        throw customerError;
-      }
-
-      if (!customerData) {
-        console.error('No customer data found for user:', user.id);
-        throw new Error('Customer profile not found');
-      }
-
-      console.log('Customer data found:', customerData);
+      // User ID is now customer ID directly (unified user management)
+      console.log('Processing checkout for customer:', user.id);
 
       // Create order
       const orderId = crypto.randomUUID();
@@ -201,13 +184,13 @@ export default function CheckoutPage() {
       expectedDeliveryDate.setDate(expectedDeliveryDate.getDate() + 7);
 
       const { data: newOrder, error: orderError } = await supabase
-        .from('Order')
+        .from('orders') // Updated table name
         .insert({
           orderid: orderId,
-          customerid: customerData.customerid,
+          customerid: user.id, // User ID is now customer ID directly
           orderdate: new Date().toISOString(),
           expecteddeliverydate: expectedDeliveryDate.toISOString(),
-          status: 'pending'
+          orderstatus: 'pending' // Updated field name
         })
         .select()
         .single();
@@ -282,7 +265,6 @@ export default function CheckoutPage() {
       // Create payment record - SIMPLIFIED APPROACH
       console.log('=== CREATING PAYMENT RECORD ===');
       console.log('User ID:', user.id);
-      console.log('Customer ID:', customerData.customerid);
       console.log('Order ID:', orderId);
       console.log('Payment Amount:', getTotal());
 
@@ -297,8 +279,8 @@ export default function CheckoutPage() {
         .from('paymentcustomer')
         .insert({
           paymentid: paymentId,
-          customerid: customerData.customerid,
-          orderid: orderId,  // This should work - no FK constraint in actual schema
+          customerid: user.id, // User ID is customer ID in unified schema
+          orderid: orderId,
           amount: paymentAmount,
           paymentmethod: 'credit_card',
           paymentdate: new Date().toISOString(),

@@ -115,22 +115,14 @@ export default function PaymentsPage() {
         .from('paymentcustomer')
         .select(`
           *,
-          order:Order(orderid, orderdate),
+          order:orders(orderid, orderdate),
           customers(customername)
         `)
         .order('paymentdate', { ascending: false });
 
-      // If customer role, only show their own payments
+      // If customer role, only show their own payments (user ID is now customer ID directly)
       if (user?.role === 'customer') {
-        const { data: customerData } = await supabase
-          .from('customers')
-          .select('customerid')
-          .eq('userid', user.id)
-          .single();
-
-        if (customerData) {
-          query = query.eq('customerid', customerData.customerid);
-        }
+        query = query.eq('customerid', user.id);
       }
 
       const { data, error } = await query;
@@ -172,9 +164,9 @@ export default function PaymentsPage() {
   const loadOrders = async () => {
     try {
       const { data, error } = await supabase
-        .from('Order')
+        .from('orders') // Updated table name
         .select('orderid, orderdate, customerid, customers(customername)')
-        .eq('status', 'delivered')
+        .eq('orderstatus', 'delivered') // Updated field name
         .order('orderdate', { ascending: true }); // FIFO: First In, First Out
 
       if (error) throw error;
@@ -343,7 +335,7 @@ export default function PaymentsPage() {
       <div className="space-y-6">
         <DatabaseIndicator
           primaryTables={['paymentcustomer', 'paymentsupplier']}
-          relatedTables={['Order', 'purchaseorder', 'customers', 'supplier']}
+          relatedTables={['orders', 'purchaseorder', 'customers', 'supplier']}
           operations={['Record Payments', 'Track Cash Flow', 'Payment History']}
           description="Payment management system for customer and supplier transactions"
         />

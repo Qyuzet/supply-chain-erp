@@ -53,7 +53,7 @@ interface OrderWithDetails {
   customerid: string;
   orderdate: string;
   expecteddeliverydate: string | null;
-  status: string;
+  orderstatus: string; // Fixed field name
   orderdetail?: Array<{
     orderid: string;
     productid: string;
@@ -69,7 +69,7 @@ interface OrderWithDetails {
   shipments?: Array<{
     shipmentid: string;
     trackingnumber: string | null;
-    status: string;
+    shipmentstatus: string; // Fixed field name
     shipmentdate: string;
   }>;
 }
@@ -143,25 +143,9 @@ export default function OrdersPage() {
 
       if (userData.role === 'customer') {
         console.log('User is customer, getting customer profile...');
-        // Get customer ID first
-        const { data: customerData, error: customerError } = await supabase
-          .from('customers')
-          .select('customerid')
-          .eq('userid', userData.id)
-          .single();
-
-        console.log('Customer data:', customerData);
-        console.log('Customer error:', customerError);
-
-        if (customerData) {
-          console.log('Fetching orders for customer:', customerData.customerid);
-          ordersData = await orderOperations.getCustomerOrders(customerData.customerid);
-        } else {
-          console.log('No customer profile found for user, showing all orders for now...');
-          // For now, just show all orders if no customer profile
-          // This is a temporary fix to see if orders display works
-          ordersData = await orderOperations.getAllOrders();
-        }
+        // User ID is now the customer ID directly (unified user management)
+        console.log('Fetching orders for customer:', userData.id);
+        ordersData = await orderOperations.getCustomerOrders(userData.id);
       } else if (userData.role === 'admin' || userData.role === 'warehouse') {
         console.log('User is admin/warehouse, getting all orders...');
         ordersData = await orderOperations.getAllOrders();
@@ -249,21 +233,8 @@ export default function OrdersPage() {
     }
 
     try {
-      // Get customer ID
-      const { data: customerData } = await supabase
-        .from('customers')
-        .select('customerid')
-        .eq('userid', user.id)
-        .single();
-
-      if (!customerData) {
-        toast({
-          title: "Error",
-          description: "Customer profile not found. Please switch to customer role first.",
-          variant: "destructive",
-        });
-        return;
-      }
+      // User ID is now customer ID directly (unified user management)
+      // No need to look up customer profile
 
       const totalAmount = orderItems.reduce((sum, item) => sum + (item.quantity * item.unitprice), 0);
       const expectedDeliveryDate = new Date();
@@ -272,15 +243,15 @@ export default function OrdersPage() {
       // Generate UUID for order (backup solution)
       const orderId = crypto.randomUUID();
 
-      // Create order (using correct table name "Order")
+      // Create order (updated table name and field name)
       const { data: newOrder, error: orderError } = await supabase
-        .from('Order')
+        .from('orders') // Updated table name
         .insert({
           orderid: orderId,
-          customerid: customerData.customerid,
+          customerid: user.id, // User ID is now customer ID directly
           orderdate: new Date().toISOString(),
           expecteddeliverydate: expectedDeliveryDate.toISOString(),
-          status: 'pending'
+          orderstatus: 'pending' // Updated field name
         })
         .select()
         .single();
@@ -359,7 +330,7 @@ export default function OrdersPage() {
               warehouseid: primaryWarehouseId,
               shipmentdate: new Date().toISOString(),
               trackingnumber: `TRK${Date.now()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
-              status: 'pending'
+              shipmentstatus: 'pending' // Fixed field name
             });
         }
       }
@@ -388,8 +359,9 @@ export default function OrdersPage() {
     const colors = {
       pending: 'bg-yellow-100 text-yellow-800',
       confirmed: 'bg-blue-100 text-blue-800',
-      processing: 'bg-purple-100 text-purple-800',
+      ready_for_pickup: 'bg-purple-100 text-purple-800',
       shipped: 'bg-orange-100 text-orange-800',
+      in_transit: 'bg-indigo-100 text-indigo-800',
       delivered: 'bg-green-100 text-green-800',
       cancelled: 'bg-red-100 text-red-800',
     };
@@ -636,7 +608,7 @@ ORDER BY osh.changedat ASC;
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {orders.filter(o => !['delivered', 'cancelled'].includes(o.status)).length}
+              {orders.filter(o => !['delivered', 'cancelled'].includes(o.orderstatus)).length}
             </div>
             <p className="text-xs text-muted-foreground">In progress</p>
           </CardContent>
@@ -649,7 +621,7 @@ ORDER BY osh.changedat ASC;
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {orders.filter(o => o.status === 'shipped').length}
+              {orders.filter(o => ['shipped', 'in_transit'].includes(o.orderstatus)).length}
             </div>
             <p className="text-xs text-muted-foreground">Being delivered</p>
           </CardContent>
@@ -689,8 +661,8 @@ ORDER BY osh.changedat ASC;
                     {new Date(order.orderdate).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(order.status)}>
-                      {order.status}
+                    <Badge className={getStatusColor(order.orderstatus)}>
+                      {order.orderstatus}
                     </Badge>
                   </TableCell>
                   <TableCell>{order.orderdetail?.length || 0} items</TableCell>
@@ -733,8 +705,8 @@ ORDER BY osh.changedat ASC;
                                   Date: {new Date(selectedOrder.orderdate).toLocaleDateString()}
                                 </p>
                                 <p className="text-sm text-gray-600">
-                                  Status: <Badge className={getStatusColor(selectedOrder.status)}>
-                                    {selectedOrder.status}
+                                  Status: <Badge className={getStatusColor(selectedOrder.orderstatus)}>
+                                    {selectedOrder.orderstatus}
                                   </Badge>
                                 </p>
                               </div>
@@ -746,7 +718,7 @@ ORDER BY osh.changedat ASC;
                                       Tracking: {selectedOrder.shipments[0].trackingnumber || 'N/A'}
                                     </p>
                                     <p className="text-sm text-gray-600">
-                                      Status: {selectedOrder.shipments[0].status}
+                                      Status: {selectedOrder.shipments[0].shipmentstatus}
                                     </p>
                                   </div>
                                 ) : (

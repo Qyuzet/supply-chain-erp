@@ -77,37 +77,23 @@ export default function DashboardPage() {
 
   const loadCustomerStats = async () => {
     try {
-      // Get customer ID first
-      const { data: customerData } = await supabase
-        .from('customers')
-        .select('customerid')
-        .eq('userid', user?.id)
-        .single();
+      // User ID is now customer ID directly (unified user management)
+      // Get customer orders
+      const { data: orders } = await supabase
+        .from('orders') // Updated table name
+        .select('*')
+        .eq('customerid', user?.id);
 
-      if (customerData) {
-        // Get customer orders
-        const { data: orders } = await supabase
-          .from('Order')
-          .select('*')
-          .eq('customerid', customerData.customerid);
+      // Get shipments for customer orders
+      const { data: shipments } = await supabase
+        .from('shipments')
+        .select('*')
+        .in('orderid', orders?.map(o => o.orderid) || []);
 
-        // Get shipments for customer orders
-        const { data: shipments } = await supabase
-          .from('shipments')
-          .select('*')
-          .in('orderid', orders?.map(o => o.orderid) || []);
-
-        setStats({
-          totalOrders: orders?.length || 0,
-          pendingShipments: shipments?.filter(s => s.status === 'pending' || s.status === 'in_transit').length || 0,
-        });
-      } else {
-        // No customer profile found, set zero stats
-        setStats({
-          totalOrders: 0,
-          pendingShipments: 0,
-        });
-      }
+      setStats({
+        totalOrders: orders?.length || 0,
+        pendingShipments: shipments?.filter(s => s.shipmentstatus === 'pending' || s.shipmentstatus === 'in_transit').length || 0, // Updated field name
+      });
     } catch (error) {
       console.error('Error loading customer stats:', error);
       // Fallback to zero stats
@@ -120,11 +106,11 @@ export default function DashboardPage() {
 
   const loadSupplierStats = async () => {
     try {
-      // Get supplier ID first
+      // Get supplier ID first (updated foreign key reference)
       const { data: supplierData } = await supabase
         .from('supplier')
         .select('supplierid')
-        .eq('userid', user?.id)
+        .eq('userid', user?.id) // This still references customers.customerid
         .single();
 
       if (supplierData) {
